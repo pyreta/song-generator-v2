@@ -1,175 +1,142 @@
-<img src="internals/img/erb-banner.png" width="100%" />
+# ChordBoard
+ChordBoard is a virtual MIDI controller.  It is the calculator of music production.  With ChordBoard, you can harnass the power of music theory without having to memorize a bunch of crap.  Ideal for music composers and producers.  This program is currently only compatible on Macs.
 
-<br>
+any questions email pyreta@gmail.com
 
-<p>
-  Electron React Boilerplate uses <a href="https://electron.atom.io/">Electron</a>, <a href="https://facebook.github.io/react/">React</a>, <a href="https://github.com/reactjs/redux">Redux</a>, <a href="https://github.com/reactjs/react-router">React Router</a>, <a href="https://webpack.github.io/docs/">Webpack</a> and <a href="https://github.com/gaearon/react-hot-loader">React Hot Loader</a> for rapid application development (HMR).
-</p>
+![cb2-demologic](https://user-images.githubusercontent.com/15112854/39724365-96f4762e-5216-11e8-8df6-d972ea15cbdf.gif)
 
-<br>
+## Table of Contents
 
-<div align="center">
-  <a href="https://facebook.github.io/react/"><img src="./internals/img/react-padded-90.png" /></a>
-  <a href="https://webpack.github.io/"><img src="./internals/img/webpack-padded-90.png" /></a>
-  <a href="https://redux.js.org/"><img src="./internals/img/redux-padded-90.png" /></a>
-  <a href="https://github.com/ReactTraining/react-router"><img src="./internals/img/react-router-padded-90.png" /></a>
-  <a href="https://eslint.org/"><img src="./internals/img/eslint-padded-90.png" /></a>
-  <a href="https://facebook.github.io/jest/"><img src="./internals/img/jest-padded-90.png" /></a>
-  <a href="https://yarnpkg.com/"><img src="./internals/img/yarn-padded-90.png" /></a>
-</div>
+- [Setup](#setup)
+  * [Add a virtual MIDI device](#add-a-virtual-midi-device-on-your-mac)
+  * [Configure Logic Environment](#configure-logic-environment) *only if you want to use a MIDI keyboard*
+  * [Installing ChordBoard](#installing-chordboard)
+- [Instruction Manual](#instruction-manual)
+  * [Basic Usage](#basic-usage)
+  * [Features](#features)
+    * [Change Key](#key-change)
+    * [Change Chord Quality](#chord-quality)
+    * [Settings Dropdown](#settings-dropdown-menu)
+    * [Connect ChordBoard to your DAW (Logic, GarageBand, etc..)](#select-midi-devices)
+    * [Connect a MIDI Keyboard](#select-midi-devices)
+    * [Next Chord Probability](#next-chord-probability)
+    * [Add new scale rows](#toggle-scales)
+    * [Invert Chords](#chord-inversions)
+    * [Secondary Functional Chords](#secondary-functional-chords)
+------------------------------------------------------------
 
-<hr />
-<br />
+# Setup
+## Add a virtual MIDI device on your Mac
+To your DAW, there is no difference between `ChordBard` and a regular MIDI keyboard. We need to create a 'virtual' MIDI device that `ChordBoard` can use to send the MIDI to your DAW.  This only needs to be done once.
 
-<div align="center">
+1) Spotlight search 'midi' and choose `Audio MIDI Setup`
 
-[![Build Status][github-actions-status]](github-actions-status)
-[![Dependency Status][david-image]][david-url]
-[![DevDependency Status][david-dev-image]][david-dev-url]
-[![Github Tag][github-tag-image]][github-tag-url]
+![screen shot 2018-05-04 at 8 39 16 am](https://user-images.githubusercontent.com/15112854/39628698-e2748450-4f77-11e8-995a-935cea453a67.png)
 
-[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/electron-react-blpt)
-[![OpenCollective](https://opencollective.com/electron-react-boilerplate/backers/badge.svg)](#backers)
-[![OpenCollective](https://opencollective.com/electron-react-boilerplate/sponsors/badge.svg)](#sponsors)
-[![Good first issues open][good-first-issue-image]][good-first-issue-url]
-[![StackOverflow][stackoverflow-img]][stackoverflow-url]
+2) Choose `Show MIDI Studio` from `Window` menu
 
-</div>
+![screen shot 2018-05-04 at 8 40 00 am](https://user-images.githubusercontent.com/15112854/39628803-2c795292-4f78-11e8-9153-5443b5845951.png)
 
-<div align="center">
+3) Double click the red box that says `IAC`
 
-![Electron Boilerplate Demo](https://cloud.githubusercontent.com/assets/3382565/10557547/b1f07a4e-74e3-11e5-8d27-79ab6947d429.gif)
+![screen shot 2018-05-04 at 8 40 20 am](https://user-images.githubusercontent.com/15112854/39628860-5b17da6a-4f78-11e8-8875-9b971880b106.png)
 
-</div>
+4) Check `Device is online` box, and add a bus named `ChordBoard`.  Make sure to name the port `ChordBoard` (case sensitive) so ChordBoard can automatically connect to this port.  Also ensure the device name is `IAC`.
 
-## Install
+![virtualmididevice](https://user-images.githubusercontent.com/15112854/39628958-9e280668-4f78-11e8-821a-b10130c76074.gif)
 
-- **If you have installation or compilation issues with this project, please see [our debugging guide](https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues/400)**
+## Configure Logic Environment
+In order to use the ChordBoard with a physical MIDI keyboard, we need to make sure Logic is ignoring all MIDI signal inputs other than the ChordBoard.  This way Logic won't receive messages from the MIDI controller, and the ChordBoard at the same time. We only want Logic to use the notes that the `ChordBoard` outputs.  This step is completely unecessary if you don't want to use a MIDI keyboard with ChordBoard.  
+*If you are using something other than Logic, just make sure the track you are using for the ChordBoard is only receiving input from ChordBoard.*
 
-First, clone the repo via git and install dependencies:
+1) Select `Open MIDI Environment` from the `Window` menu (or press `command` + `0`):
 
-```bash
-git clone --depth 1 --single-branch https://github.com/electron-react-boilerplate/electron-react-boilerplate.git your-project-name
-cd your-project-name
-yarn
-```
+![screen shot 2018-05-04 at 8 32 21 am](https://user-images.githubusercontent.com/15112854/39630248-ccad7d70-4f7c-11e8-96df-8158647f6ae8.png)
 
-## Starting Development
+2) Select `Click & Ports` from the `Layer` dropdown in the top left corner of the window
 
-Start the app in the `dev` environment. This starts the renderer process in [**hot-module-replacement**](https://webpack.js.org/guides/hmr-react/) mode and starts a webpack dev server that sends hot updates to the renderer process:
+![clickandports](https://user-images.githubusercontent.com/15112854/39630414-3b7a87fc-4f7d-11e8-92cf-660b2e409546.gif)
 
-```bash
-yarn dev
-```
+3) Disconnect the `sum` bus from the current setup by dragging the end of the connection back to the beginning of the connection (where the word 'sum' is).  Now drag a new connection from `ChordBoard` (or whatever you named your virtual port before) to the same place you removed that first connection from.
 
-## Packaging for Production
+![logicenvironment](https://user-images.githubusercontent.com/15112854/39630598-c6ecce26-4f7d-11e8-8738-e1d3ae638931.gif)
 
-To package apps for the local platform:
+## Installing ChordBoard
+1) Download the `dmg` file and drag icon into your `Applications` folder
+2) If you can't open the program because Apple doesn't recognize the developer, do use right click > open, instead of double clicking.
 
-```bash
-yarn package
-```
+# Instruction Manual
 
-## Docs
+## Basic Usage
 
-See our [docs and guides here](https://electron-react-boilerplate.js.org/docs/installation)
+The **ChordBoard** works as as a 2 dimensional matrix of squares representing various chords.  When clicking a chord, MIDI signals are sent to your DAW (nicely voiced), and could be recorded just like a physical MIDI keyboard can.  In fact, your DAW makes no distinction between ChordBoard and a generic MIDI keyboard.
 
-## Donations
+Each row contains the 7 chords created by the given scale in the [selected key](#key-change).  Multiple rows can be dynamically stacked upon one another allowing [borrowed chords](https://en.wikipedia.org/wiki/Borrowed_chord) from other scales.
 
-**Donations will ensure the following:**
+In addition to clicking each box, or pressing numbers 1-7 on your keypad, chords can also be played using a MIDI controller.  ChordBoard maps the [selected scale](#select-scale-to-be-routed-to-midi-controller) row to all the white keys on your MIDI keyboard.  All white keys below octave 5 will trigger full chords, and all the white keys above will play single notes corresponding to the [key](#key-change) and [scale](#select-scale-to-be-routed-to-midi-controller) currently set in ChordBoard.  This allows for the ability to play in any key and scale seemlessly, even if you don't play the piano.  This is one of the more powerful features of ChordBoard.
 
-- 🔨 Long term maintenance of the project
-- 🛣 Progress on the [roadmap](https://electron-react-boilerplate.js.org/docs/roadmap)
-- 🐛 Quick responses to bug reports and help requests
+## Features
 
-## Backers
+### Key Change
+Change the key by selecting from the key menu, or navigating with the left and right arrow keys.
+![cb2-keychange](https://user-images.githubusercontent.com/15112854/39736692-3be4dfb0-524f-11e8-90f8-af3c7fb3d269.gif)
 
-Support us with a monthly donation and help us continue our activities. [[Become a backer](https://opencollective.com/electron-react-boilerplate#backer)]
+## Chord Quality
+Chord quality can be adjusted by clicking the chord quality buttons. Aside from using these buttons, the keys `z`, `x`, `c`, `v` and `b` are mapped to those buttons respectively.  This means all the chords will have a `seventh` quality while holding down the `v` key and then revert back to basic triads when the key is released.
 
-<a href="https://opencollective.com/electron-react-boilerplate/backer/0/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/0/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/1/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/1/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/2/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/2/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/3/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/3/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/4/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/4/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/5/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/5/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/6/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/6/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/7/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/7/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/8/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/8/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/9/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/9/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/10/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/10/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/11/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/11/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/12/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/12/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/13/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/13/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/14/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/14/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/15/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/15/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/16/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/16/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/17/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/17/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/18/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/18/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/19/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/19/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/20/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/20/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/21/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/21/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/22/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/22/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/23/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/23/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/24/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/24/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/25/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/25/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/26/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/26/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/27/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/27/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/28/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/28/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/backer/29/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/backer/29/avatar.svg"></a>
+![cb2-quality](https://user-images.githubusercontent.com/15112854/39755341-7c3004de-5293-11e8-938f-fb95a6a14465.gif)
 
-## Sponsors
+### Settings Dropdown Menu
+Access options and settings through dropdown menu by clicking on blue gear icon in the top left.
 
-Become a sponsor and get your logo on our README on Github with a link to your site. [[Become a sponsor](https://opencollective.com/electron-react-boilerplate-594#sponsor)]
+![cb2-dropdown](https://user-images.githubusercontent.com/15112854/39736576-af6d7d76-524e-11e8-9a79-8cbe3b25ba46.gif)
+#### Dropdown Options:
+- **Bypass Chord Board** - When this option is selected, all ChordBoard settings will be ignored by your MIDI keyboard.  All notes will be routed to your DAW unchanged.
+- **[Roman Numeral Notation](#toggle-roman-numeral-chord-notation)** - When selected, all chords will display their relative Roman Numeral notation. When this is off, only the chord name will be shown.
+- **[Show next chord probability](#next-chord-probability)** - This option displays a blue bar inside each chord, indicating the likelihood that it will work as the next chord, based on the last chord clicked.  Due to time and performance constraints, this option only works when chords are clicked with a mouse.
+- **Add root bass note** - When this option is selected, and auto voicing is on, a root bass note will be added to the chord voicing, ignoring the inversion calculated by ChordBoard.
+- **Add inverted bass note** - When this option is selected, and auto voicing is on, an inverted bass note will be added to the chord voicing, following the inversion calculated by ChordBoard.
+- **Auto voicing** - This option voices all chords to one common chord, or to the previous chord when `Voice previous chord` is also selected
+- **[Show scales](toggle-scales)** - Selecting this option reveals the scales which could then be added or removed from the displayed scale rows
+- **[Output To DAW dropdown](#select-midi-devices)** - Connect to your DAW
+- **[Input from keyboard](#select-midi-devices)** - Connect a MIDI keyboard
 
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/0/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/1/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/2/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/3/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/4/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/5/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/6/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/7/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/8/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/9/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/9/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/10/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/10/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/11/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/11/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/12/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/12/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/13/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/13/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/14/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/14/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/15/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/15/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/16/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/16/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/17/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/17/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/18/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/18/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/19/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/19/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/20/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/20/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/21/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/21/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/22/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/22/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/23/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/23/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/24/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/24/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/25/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/25/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/26/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/26/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/27/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/27/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/28/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/28/avatar.svg"></a>
-<a href="https://opencollective.com/electron-react-boilerplate/sponsor/29/website" target="_blank"><img src="https://opencollective.com/electron-react-boilerplate/sponsor/29/avatar.svg"></a>
+### Toggle Roman Numeral Chord Notation
+Chords can be displayed showing their relative roman numeral notation n addition to the actual chord name by selecting `Roman Numeral Notation` from the [dropdown menu](#settings-dropdown-menu)
 
-## Maintainers
+![cb2-roman](https://user-images.githubusercontent.com/15112854/39755205-ed139b94-5292-11e8-9c16-33466057b51e.gif)
 
-- [Amila Welihinda](https://github.com/amilajack)
-- [C. T. Lin](https://github.com/chentsulin)
-- [Jhen-Jie Hong](https://github.com/jhen0409)
+### Select MIDI Devices
+#### Output to DAW
+To connect ChordBoard to your [virtual MIDI device](#add-a-virtual-midi-device-on-your-mac), select your virtual device from the `Output to DAW` dropdown in the [settings menu](#settings-dropdown-menu).  Make sure ChordBoard was started after this device has been created, otherwise it won't show up in the options.
 
-## License
+#### Input from MIDI Keyboard
+To connect a MIDI keyboard to ChordBoard, select it from the `Input from keyboard` dropdown in the [settings menu](#settings-dropdown-menu).  Make sure ChordBoard was started after this device has been connected, otherwise it won't show up in the options.
 
-MIT © [Electron React Boilerplate](https://github.com/electron-react-boilerplate)
+![cbmididevices](https://user-images.githubusercontent.com/15112854/39556024-4aaa701c-4e4b-11e8-8c23-4bf8771c41eb.gif)
 
-[github-actions-status]: https://github.com/electron-react-boilerplate/electron-react-boilerplate/workflows/Test/badge.svg
-[github-tag-image]: https://img.shields.io/github/tag/electron-react-boilerplate/electron-react-boilerplate.svg?label=version
-[github-tag-url]: https://github.com/electron-react-boilerplate/electron-react-boilerplate/releases/latest
-[stackoverflow-img]: https://img.shields.io/badge/stackoverflow-electron_react_boilerplate-blue.svg
-[stackoverflow-url]: https://stackoverflow.com/questions/tagged/electron-react-boilerplate
-[david-image]: https://img.shields.io/david/electron-react-boilerplate/electron-react-boilerplate.svg
-[david-url]: https://david-dm.org/electron-react-boilerplate/electron-react-boilerplate
-[david-dev-image]: https://img.shields.io/david/dev/electron-react-boilerplate/electron-react-boilerplate.svg?label=devDependencies
-[david-dev-url]: https://david-dm.org/electron-react-boilerplate/electron-react-boilerplate?type=dev
-[good-first-issue-image]: https://img.shields.io/github/issues/electron-react-boilerplate/electron-react-boilerplate/good%20first%20issue.svg?label=good%20first%20issues
-[good-first-issue-url]: https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues?q=is%3Aopen+is%3Aissue+label%3A"good+first+issue"
+### Select Scale to be routed to MIDI Controller
+Select the scale to be routed to your keypad, and MIDI controller, if [one is connected](#select-midi-devices), by clicking on the scale name, or navigating with the up and down arrows.
+
+![cb2-rowselect](https://user-images.githubusercontent.com/15112854/39737169-ba133ff6-5251-11e8-8efe-535e8f0a460f.gif)
+
+### Toggle Scales
+From the [options dropdown](#settings-dropdown-menu), select `Show scales` to reveal all scales.  Then click each scale to add or remove from the scale rows.
+
+![cbscaleselect](https://user-images.githubusercontent.com/15112854/39556089-c2791d5a-4e4b-11e8-935b-c6c51e084a58.gif)
+
+### Next Chord Probability
+The blue bar that appears over certain chords represents the probability that this chord will nicely follow the chord last clicked.  The higher the bar, the more frequently the chord has followed the last chord played (in popular music).  This option could be toggled on and off by clicking `Show next chord probability` from the [options dropdown](#settings-dropdown-menu).
+
+![cb2-demo](https://user-images.githubusercontent.com/15112854/39724044-a0dd21aa-5215-11e8-9d27-55884626000e.gif)
+
+### Chord Inversions
+The keys `q`, `w`, `e`, and `r` trigger *root position*, *first inversion*, *second inversion*, and *third inversion* (if applicable) of all chords.
+
+![cbinversions](https://user-images.githubusercontent.com/15112854/39555986-14a1d370-4e4b-11e8-80a1-7dcf983b3aed.gif)
+
+## Secondary Functional Chords
+
+The keys `s`, `d`, and `f` trigger *relative IV*, *relative V*, and *relative vii°* of all chords.
+
+![cbsecondary](https://user-images.githubusercontent.com/15112854/39556101-d53f6778-4e4b-11e8-94b1-35370ef6b59b.gif)
