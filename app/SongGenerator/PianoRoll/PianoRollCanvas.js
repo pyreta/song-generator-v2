@@ -189,7 +189,7 @@ class PianoRollCanvas {
 
   drawNote(x, y, width, height, isSelected) {
     this.ctx.fillStyle = isSelected ? 'purple' : 'red';
-    this.ctx.strokeStyle = theme.selected;
+    this.ctx.strokeStyle = isSelected ? 'black' : theme.selected;
     this.ctx.fillRect(x, y, width, height);
     this.ctx.strokeRect(x, y, width, height);
   }

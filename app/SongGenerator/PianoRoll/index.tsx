@@ -4,11 +4,12 @@ import PropTypes from 'prop-types';
 import { dissocPath, assocPath } from 'ramda';
 import PRC from './PianoRollCanvas';
 
-let openNote;
+const isRightClick = e => e.which === 3 || e.nativeEvent.which === 3;
+
 let hoveredNote = {};
 let selectedNote;
-let newNote;
-let xOffsetTicks;
+let cachedNewNote;
+let ringingNote;
 
 const mergeNotes = (noteToMerge, notes) => {
   if (!noteToMerge) return notes;
@@ -61,7 +62,7 @@ const PianoRoll = ({
   const noteRef = useRef();
   const gridRef = useRef();
   const pianoRef = useRef();
-  const coordRef = useRef();
+  const noteClassRef = useRef();
   const selectionRef = useRef();
   const [scrollX, setScrollX] = useState(0);
   const [scrollY, setScrollY] = useState(800);
@@ -69,6 +70,7 @@ const PianoRoll = ({
   const [zoomX, setZoomX] = useState(500);
   const [zoomY, setZoomY] = useState(150);
   const [snapToGrid, setSnapToGrid] = useState(true);
+  const [tool, setTool] = useState('edit');
   const [timeSignature] = useState([4, 8]);
   const [mouseIsDown, setMouseIsDown] = useState(false);
   const zoomXAmount = zoomX / 100;
@@ -102,8 +104,12 @@ const PianoRoll = ({
     pianoWidth,
     columnsPerQuarterNote,
     snapToGrid,
-    notes: mergeNotes(newNote, notes),
+    notes: mergeNotes(cachedNewNote, notes),
   };
+
+  useEffect(() => {
+    document.body.style.cursor = tool === 'edit' ? 'crosshair' : 'default';
+  }, [tool]);
 
   useEffect(() => {
     const canvas = pianoRef.current;
@@ -148,8 +154,8 @@ const PianoRoll = ({
   useEffect(() => {
     const canvas = noteRef.current;
     const pianoRoll = new PRC(canvas, opts);
-    coordRef.current = pianoRoll;
-    coordRef.current.drawNotes();
+    noteClassRef.current = pianoRoll;
+    noteClassRef.current.drawNotes();
   }, [
     scrollX,
     scrollY,
@@ -165,7 +171,7 @@ const PianoRoll = ({
     columnsPerQuarterNote,
     snapToGrid,
     notes,
-    newNote,
+    cachedNewNote,
   ]);
 
   const maxScrollWidth = width * canvasWidthMultiple * zoomXAmount - width;
@@ -193,10 +199,10 @@ const PianoRoll = ({
     const xOffset = rect.left;
     const x = e.clientX - xOffset;
     const y = e.clientY - yOffset;
-    if (!coordRef.current) {
-      coordRef.current = new PRC(noteRef.current, opts);
+    if (!noteClassRef.current) {
+      noteClassRef.current = new PRC(noteRef.current, opts);
     }
-    return coordRef.current.at(x, y);
+    return noteClassRef.current.at(x, y);
   };
 
   const [selectionCoords, setSelectionCoords] = useState(null);
@@ -208,79 +214,75 @@ const PianoRoll = ({
       x2: downClick.x > currentPosition.x ? downClick.x : currentPosition.x,
       y2: downClick.y > currentPosition.y ? downClick.y : currentPosition.y,
     };
-    setSelectionCoords(coords);
+    if (coords.x2 - coords.x1 > 3 && coords.y2 - coords.y1 > 3) {
+      setSelectionCoords(coords);
+    }
   };
 
   useEffect(() => {
     const pianoRoll = new PRC(selectionRef.current, opts);
     if (selectionCoords) {
-      pianoRoll.drawSelection(selectionCoords)
+      pianoRoll.drawSelection(selectionCoords);
     } else {
       pianoRoll.clear();
     }
-  }, [selectionCoords])
+  }, [selectionCoords]);
 
-  const clickPiano = note => {
-    openNote = note;
-    console.log(`note:`, note)
-    onPianoKeyDown(note);
+  const playSingleNote = noteNum => {
+    if (noteNum === ringingNote) return;
+    if (ringingNote) {
+      onPianoKeyUp(ringingNote);
+    }
+    ringingNote = noteNum;
+    onPianoKeyDown(noteNum);
   };
 
   const onRightClick = e => {
     e.preventDefault();
     const data = analyzeMousePosition(e);
     setMouseIsDown(data);
-    if (data.piano) {
-      clickPiano(data.noteNum);
-    } else {
       const clickedNote = data.noteClickedOn;
       if (clickedNote) {
         deleteNote(clickedNote);
       }
-    }
   };
 
-  const onMouseDown = e => {
-    if (e.nativeEvent.which === 3) {
-      onRightClick(e);
-      return;
+  const adjustStartTick = note => {
+    const tickDivision = (4 / timeSignature[1]) * 128;
+    let xOffset = 0;
+    if (selectedNote) {
+      xOffset = selectedNote.xOffsetTicks;
     }
+    const startTick = snapToGrid
+    ? Math.floor((note.startTick - xOffset) / tickDivision) * tickDivision
+    : note.startTick - xOffset;
+    return { ...note, startTick: startTick < 0 ? 0 : startTick };
+  }
+
+  const onMouseDown = e => {
+    if (isRightClick(e)) return onRightClick(e);
     const data = analyzeMousePosition(e);
+    if (data.piano || tool === "draw") playSingleNote(data.noteNum);
     setMouseIsDown(data);
-    if (data.piano) {
-      clickPiano(data.noteNum);
+    if (data.noteClickedOn) {
+      selectedNote = data.noteClickedOn;
+    } else if (tool === 'draw'){
+      addNote(adjustStartTick(data.newNote))
     } else {
-      const clickedNote = data.noteClickedOn;
-      if (clickedNote) {
-        xOffsetTicks = clickedNote.xOffsetTicks;
-        selectedNote = clickedNote;
-      } else {
-        onNotesChange(coordRef.current.deselectAll());
-        // addNote(data.newNote);
-      }
+      onNotesChange(noteClassRef.current.deselectAll());
     }
   };
 
   const onMouseMove = e => {
     const data = analyzeMousePosition(e);
     if (mouseIsDown) {
-      if (data.piano) {
-        if (data.noteNum !== openNote) {
-          onPianoKeyUp(openNote);
-          clickPiano(data.noteNum);
-        }
-      } else if (selectedNote) {
+      playSingleNote(data.noteNum);
+      if (selectedNote) {
         const { velocity, length } = selectedNote;
-        const trueStartTick = data.newNote.startTick - xOffsetTicks;
-        const tickDivision = (4 / timeSignature[1]) * 128;
-        const startTick = snapToGrid
-          ? Math.floor(trueStartTick / tickDivision) * tickDivision
-          : trueStartTick;
-        newNote = {
-          ...data.newNote,
+        cachedNewNote = {
+          ...adjustStartTick(data.newNote),
           velocity,
           length,
-          startTick: startTick < 0 ? 0 : startTick,
         };
         deleteNote(selectedNote);
       } else {
@@ -306,22 +308,24 @@ const PianoRoll = ({
   };
 
   useEffect(() => {
-    const onMouseUp = () => {
+    const onMouseUp = e => {
+      const data = analyzeMousePosition(e);
       setMouseIsDown(false);
       if (selectionCoords) {
-        const notesWithSelections = coordRef.current.getNotesWithSelections(selectionCoords);
+        const notesWithSelections = noteClassRef.current.getNotesWithSelections(
+          selectionCoords,
+        );
         setSelectionCoords(null);
-        console.log(`notesWithSelections:`, notesWithSelections)
-        onNotesChange(notesWithSelections)
+        onNotesChange(notesWithSelections);
+      } else if (cachedNewNote) {
+        addNote(cachedNewNote);
       }
-      if (newNote) {
-        addNote(newNote);
-      }
+
       selectedNote = null;
-      newNote = null;
-      if (openNote) {
-        onPianoKeyUp(openNote);
-        openNote = null;
+      cachedNewNote = null;
+      if (ringingNote) {
+        onPianoKeyUp(ringingNote);
+        ringingNote = null;
       }
     };
     document.addEventListener('mouseup', onMouseUp);
@@ -367,6 +371,14 @@ const PianoRoll = ({
           checked={snapToGrid}
         />
         Snap to grid
+      </div>
+      <div>
+        <input
+          type="checkbox"
+          onChange={e => setTool(e.target.checked ? 'draw' : 'edit')}
+          checked={tool === 'draw'}
+        />
+        Draw
       </div>
 
       <select value={outputId} onChange={e => onDeviceChange(e.target.value)}>
