@@ -21,6 +21,8 @@ class PianoRollCanvas {
       bottomNote = 12,
       canvasWidthMultiple = 10,
       canvasHeightMultiple = 10,
+      snapToGrid = false,
+      chords = [],
       notes,
     } = {},
   ) {
@@ -45,6 +47,8 @@ class PianoRollCanvas {
     this.canvasWidthMultiple = canvasWidthMultiple;
     this.canvasHeightMultiple = canvasHeightMultiple;
     this.noteCoords = null;
+    this.snapToGrid = snapToGrid;
+    this.chords = chords;
   }
 
   clear() {
@@ -113,11 +117,11 @@ class PianoRollCanvas {
           y > coord.y &&
           y < coord.y + coord.height
         ) {
-          const [startTick, note] = coord.path;
+          const [startTick, noteNum] = coord.path;
           hoveredNote = {
-            ...this.notes[startTick][note],
+            ...this.notes[startTick][noteNum],
             startTick,
-            note,
+            noteNum,
             xOffsetTicks: this.pixelsToTicks(x - coord.x),
           };
         }
@@ -130,7 +134,7 @@ class PianoRollCanvas {
     return Math.floor((y + this.scrollY) / this.cellheight);
   }
 
-  getNoteFromCoords(x, y) {
+  getNoteNumFromCoords(x, y) {
     const row = this.getRow(x, y);
     const note = this.rows - row + this.bottomNote - 1;
     return note;
@@ -138,15 +142,14 @@ class PianoRollCanvas {
 
   at(x, y) {
     const column = (x + this.scrollX - this.pianoWidth) / this.cellwidth;
-    const note = this.getNoteFromCoords(x, y);
+    const noteNum = this.getNoteNumFromCoords(x, y);
+    const noteClickedOn = this.noteAt(x, y);
     return {
-      getNote: () => this.noteAt(x, y),
-      // row,
-      // column,
-      note,
+      noteClickedOn,
+      noteNum,
       piano: x <= this.pianoWidth,
       newNote: {
-        note,
+        noteNum,
         startTick: Math.floor(column * 128) - 2,
         length: 128,
         velocity: 42,

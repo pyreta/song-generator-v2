@@ -12,8 +12,8 @@ let xOffsetTicks;
 
 const mergeNotes = (noteToMerge, notes) => {
   if (!noteToMerge) return notes;
-  const { startTick, note, ...lengthAndVelocity } = noteToMerge;
-  return assocPath([startTick, note], lengthAndVelocity, notes);
+  const { startTick, noteNum, ...lengthAndVelocity } = noteToMerge;
+  return assocPath([startTick, noteNum], lengthAndVelocity, notes);
 };
 
 const Wrapper = styled.div`
@@ -79,8 +79,8 @@ const PianoRoll = ({
   const changeZoomY = e => setZoomY(parseInt(e.target.value, 10));
   const changePianoWidth = e => setPianoWidth(parseInt(e.target.value, 10));
 
-  const deleteNote = ({ startTick, note }) => {
-    const delPath = dissocPath([startTick, note], notes);
+  const deleteNote = ({ startTick, noteNum }) => {
+    const delPath = dissocPath([startTick, noteNum], notes);
     onNotesChange(delPath);
   };
 
@@ -101,6 +101,7 @@ const PianoRoll = ({
     columns,
     pianoWidth,
     columnsPerQuarterNote,
+    snapToGrid,
     notes: mergeNotes(newNote, notes),
   };
 
@@ -121,6 +122,7 @@ const PianoRoll = ({
     columns,
     pianoWidth,
     columnsPerQuarterNote,
+    snapToGrid,
   ]);
 
   useEffect(() => {
@@ -140,6 +142,7 @@ const PianoRoll = ({
     columns,
     pianoWidth,
     columnsPerQuarterNote,
+    snapToGrid,
   ]);
 
   useEffect(() => {
@@ -160,6 +163,7 @@ const PianoRoll = ({
     columns,
     pianoWidth,
     columnsPerQuarterNote,
+    snapToGrid,
     notes,
     newNote,
   ]);
@@ -227,9 +231,9 @@ const PianoRoll = ({
     const data = analyzeMousePosition(e);
     setMouseIsDown(data);
     if (data.piano) {
-      clickPiano(data.note);
+      clickPiano(data.noteNum);
     } else {
-      const clickedNote = data.getNote();
+      const clickedNote = data.noteClickedOn;
       if (clickedNote) {
         deleteNote(clickedNote);
       }
@@ -244,9 +248,9 @@ const PianoRoll = ({
     const data = analyzeMousePosition(e);
     setMouseIsDown(data);
     if (data.piano) {
-      clickPiano(data.note);
+      clickPiano(data.noteNum);
     } else {
-      const clickedNote = data.getNote();
+      const clickedNote = data.noteClickedOn;
       if (clickedNote) {
         xOffsetTicks = clickedNote.xOffsetTicks;
         selectedNote = clickedNote;
@@ -261,9 +265,9 @@ const PianoRoll = ({
     const data = analyzeMousePosition(e);
     if (mouseIsDown) {
       if (data.piano) {
-        if (data.note !== openNote) {
+        if (data.noteNum !== openNote) {
           onPianoKeyUp(openNote);
-          clickPiano(data.note);
+          clickPiano(data.noteNum);
         }
       } else if (selectedNote) {
         const { velocity, length } = selectedNote;
@@ -284,7 +288,7 @@ const PianoRoll = ({
       }
       hoveredNote = {};
     } else {
-      const note = data.getNote();
+      const note = data.noteClickedOn;
       if (!note) {
         hoveredNote = {};
         return;
@@ -292,7 +296,7 @@ const PianoRoll = ({
       if (
         !note ||
         (hoveredNote.startTick === note.startTick &&
-          note.note === hoveredNote.note)
+          note.noteNum === hoveredNote.noteNum)
       ) {
         return;
       }
