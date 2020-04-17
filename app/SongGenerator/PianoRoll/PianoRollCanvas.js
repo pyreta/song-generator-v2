@@ -1,5 +1,9 @@
 import theme from '../../theme';
 
+function rectsIntersect(r1, r2) {
+  return !(r2.x1 > r1.x2 || r2.x2 < r1.x1 || r2.y1 > r1.y2 || r2.y2 < r1.y1);
+}
+
 class PianoRollCanvas {
   constructor(
     canvas,
@@ -14,6 +18,7 @@ class PianoRollCanvas {
       zoomYAmount = 1,
       width = 800,
       height = 800,
+      bottomNote = 12,
       canvasWidthMultiple = 10,
       canvasHeightMultiple = 10,
       notes,
@@ -35,6 +40,8 @@ class PianoRollCanvas {
     this.scrollY = scrollY;
     this.zoomXAmount = zoomXAmount;
     this.zoomYAmount = zoomYAmount;
+    this.bottomNote = bottomNote;
+    this.topNote = this.octaves * 12 + this.bottomNote - 1;
     this.canvasWidthMultiple = canvasWidthMultiple;
     this.canvasHeightMultiple = canvasHeightMultiple;
     this.noteCoords = null;
@@ -42,6 +49,58 @@ class PianoRollCanvas {
 
   clear() {
     this.ctx.clearRect(0, 0, this.w, this.h);
+  }
+
+  drawSelection({ x1, y1, x2, y2 }) {
+    this.clear();
+    this.ctx.fillStyle = 'rgba(0, 1, 127, 0.1';
+    this.ctx.strokeStyle = theme.titles;
+    this.ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+    this.ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+  }
+
+  getNoteCoords(location, noteNum, length) {
+    const x1 = this.ticksToPixels(location) + this.pianoWidth - this.scrollX;
+    const x2 = x1 + this.ticksToPixels(length);
+    const y1 = (this.topNote - noteNum) * this.cellheight - this.scrollY;
+    const y2 = y1 + this.cellheight;
+    return { x1, y1, x2, y2 };
+  }
+
+  setSelections(val) {
+    return Object.keys(this.notes).reduce((acc, location) => {
+      const notesAtLoc = this.notes[location];
+      return {
+        ...acc,
+        [location]: Object.keys(notesAtLoc).reduce((acc2, noteNum) => {
+          const note = notesAtLoc[noteNum];
+          return {
+            ...acc2,
+            [noteNum]: {
+              ...note,
+              isSelected:
+                typeof val === 'function'
+                  ? val({ location, noteNum, ...note })
+                  : val,
+            },
+          };
+        }, {}),
+      };
+    }, {});
+  }
+
+  getNotesWithSelections(coords) {
+    const fn = ({ location, noteNum, length }) =>
+      rectsIntersect(this.getNoteCoords(location, noteNum, length), coords);
+    return this.setSelections(fn);
+  }
+
+  selectAll() {
+    return this.setSelections(true);
+  }
+
+  deselectAll() {
+    return this.setSelections(false);
   }
 
   noteAt(x, y) {
@@ -67,14 +126,23 @@ class PianoRollCanvas {
     return hoveredNote;
   }
 
+  getRow(x, y) {
+    return Math.floor((y + this.scrollY) / this.cellheight);
+  }
+
+  getNoteFromCoords(x, y) {
+    const row = this.getRow(x, y);
+    const note = this.rows - row + this.bottomNote - 1;
+    return note;
+  }
+
   at(x, y) {
-    const row = Math.floor((y + this.scrollY) / this.cellheight);
     const column = (x + this.scrollX - this.pianoWidth) / this.cellwidth;
-    const note = this.rows - row + 12;
+    const note = this.getNoteFromCoords(x, y);
     return {
       getNote: () => this.noteAt(x, y),
-      row,
-      column,
+      // row,
+      // column,
       note,
       piano: x <= this.pianoWidth,
       newNote: {
@@ -99,7 +167,7 @@ class PianoRollCanvas {
   }
 
   getNoteRow(noteNum) {
-    return this.rows + (7 - this.octaves) * 12 - parseInt(noteNum, 10) + 12;
+    return this.rows - parseInt(noteNum, 10) + this.bottomNote - 1;
   }
 
   drawNotesAtLocation(startTick, notes) {
@@ -110,14 +178,14 @@ class PianoRollCanvas {
       const width = this.ticksToPixels(parseInt(notes[noteNum].length, 10));
       const y = this.cellheight * row - this.scrollY;
       const height = this.cellheight;
-      this.drawNote(x, y, width, height);
+      this.drawNote(x, y, width, height, notes[noteNum].isSelected);
       coords.push({ x, y, width, height, path: [startTick, noteNum] });
     });
     return coords;
   }
 
-  drawNote(x, y, width, height) {
-    this.ctx.fillStyle = 'red';
+  drawNote(x, y, width, height, isSelected) {
+    this.ctx.fillStyle = isSelected ? 'purple' : 'red';
     this.ctx.strokeStyle = theme.selected;
     this.ctx.fillRect(x, y, width, height);
     this.ctx.strokeRect(x, y, width, height);
@@ -175,8 +243,7 @@ class PianoRollCanvas {
     for (let row = 0; row < this.rows; row += 1) {
       const y = row * this.cellheight;
       this.ctx.beginPath();
-      // this.ctx.fillStyle = row % 2 ? theme.selected : theme.paragraph;
-      switch (11 - (row % 12)) {
+      switch (this.bottomNote - 1 - (row % 12)) {
         case 1:
         case 3:
         case 6:
@@ -187,7 +254,6 @@ class PianoRollCanvas {
         default:
           this.ctx.fillStyle = theme.paragraph;
       }
-      // this.ctx.fillStyle = row % 2 ? theme.selected : theme.paragraph;
       this.ctx.strokeStyle = theme.background;
       this.ctx.rect(0, y - this.scrollY, this.pianoWidth, this.cellheight);
       this.ctx.fill();

@@ -20,7 +20,6 @@ export const trackData1 = {
       60: {
         length: 64,
         velocity: 52,
-        selected: true,
       },
       62: {
         length: 128,

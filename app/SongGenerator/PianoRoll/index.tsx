@@ -34,6 +34,14 @@ const YScroll = styled.input`
   position: absolute;
 `;
 
+/*
+TODO:
+volume
+group move
+grid highlighting by chord
+zoom behavior (stablized view and bugs)
+*/
+
 const PianoRoll = ({
   width,
   height,
@@ -54,6 +62,7 @@ const PianoRoll = ({
   const gridRef = useRef();
   const pianoRef = useRef();
   const coordRef = useRef();
+  const selectionRef = useRef();
   const [scrollX, setScrollX] = useState(0);
   const [scrollY, setScrollY] = useState(800);
   const [pianoWidth, setPianoWidth] = useState(100);
@@ -186,18 +195,30 @@ const PianoRoll = ({
     return coordRef.current.at(x, y);
   };
 
+  const [selectionCoords, setSelectionCoords] = useState(null);
+
   const drawSquare = (downClick, currentPosition) => {
     const coords = {
-      x1: downClick.x,
-      y1: downClick.y,
-      x2: currentPosition.x,
-      y2: currentPosition.y,
+      x1: downClick.x < currentPosition.x ? downClick.x : currentPosition.x,
+      y1: downClick.y < currentPosition.y ? downClick.y : currentPosition.y,
+      x2: downClick.x > currentPosition.x ? downClick.x : currentPosition.x,
+      y2: downClick.y > currentPosition.y ? downClick.y : currentPosition.y,
     };
-    return coords;
+    setSelectionCoords(coords);
   };
+
+  useEffect(() => {
+    const pianoRoll = new PRC(selectionRef.current, opts);
+    if (selectionCoords) {
+      pianoRoll.drawSelection(selectionCoords)
+    } else {
+      pianoRoll.clear();
+    }
+  }, [selectionCoords])
 
   const clickPiano = note => {
     openNote = note;
+    console.log(`note:`, note)
     onPianoKeyDown(note);
   };
 
@@ -230,7 +251,8 @@ const PianoRoll = ({
         xOffsetTicks = clickedNote.xOffsetTicks;
         selectedNote = clickedNote;
       } else {
-        addNote(data.newNote);
+        onNotesChange(coordRef.current.deselectAll());
+        // addNote(data.newNote);
       }
     }
   };
@@ -282,6 +304,12 @@ const PianoRoll = ({
   useEffect(() => {
     const onMouseUp = () => {
       setMouseIsDown(false);
+      if (selectionCoords) {
+        const notesWithSelections = coordRef.current.getNotesWithSelections(selectionCoords);
+        setSelectionCoords(null);
+        console.log(`notesWithSelections:`, notesWithSelections)
+        onNotesChange(notesWithSelections)
+      }
       if (newNote) {
         addNote(newNote);
       }
@@ -348,6 +376,7 @@ const PianoRoll = ({
       <Wrapper onWheel={onWheel} style={{ width, height }}>
         <Canvas ref={gridRef} width={width} height={height} />
         <Canvas ref={noteRef} width={width} height={height} />
+        <Canvas ref={selectionRef} width={width} height={height} />
         <Canvas
           ref={pianoRef}
           width={width}
