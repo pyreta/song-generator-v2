@@ -7,9 +7,9 @@ import PRC from './PianoRollCanvas';
 const isRightClick = e => e.which === 3 || e.nativeEvent.which === 3;
 
 const storage = {
-  cachedNewNote: null,
   ringingNote: null,
   noteBeforeChange: null,
+  noteDelta: null,
 };
 
 const mergeNotes = (noteToMerge, notes) => {
@@ -20,6 +20,16 @@ const mergeNotes = (noteToMerge, notes) => {
     lengthAndVelocity,
     notes,
   );
+};
+
+const mergeWithDelta = (note, delta) => {
+  if (!note || !delta) return null;
+  return Object.keys(delta).reduce((acc, noteAttr) => {
+    return {
+      ...acc,
+      [noteAttr]: note[noteAttr] + delta[noteAttr],
+    };
+  }, note);
 };
 
 const Wrapper = styled.div`
@@ -117,7 +127,10 @@ const PianoRoll = ({
     pianoWidth,
     columnsPerQuarterNote,
     snapToGrid,
-    notes: mergeNotes(storage.cachedNewNote, notes),
+    notes: mergeNotes(
+      mergeWithDelta(storage.noteBeforeChange, storage.noteDelta),
+      notes,
+    ),
   };
 
   // ************************* Effects *************************
@@ -187,7 +200,7 @@ const PianoRoll = ({
     columnsPerQuarterNote,
     snapToGrid,
     notes,
-    storage.cachedNewNote,
+    storage.noteDelta,
   ]);
 
   useEffect(() => {
@@ -243,12 +256,13 @@ const PianoRoll = ({
     storage.noteBeforeChange = data.noteClickedOn;
     if (tool === 'draw') {
       const newLength = snap(data.location) - data.noteClickedOn.startTick;
-      const adjustedNote = {
-        ...data.noteClickedOn,
-        length: newLength < tickDivision ? tickDivision : newLength,
-      };
       deleteNote(data.noteClickedOn);
-      storage.cachedNewNote = adjustedNote;
+      storage.noteDelta = {
+        length:
+          newLength < tickDivision
+            ? tickDivision - storage.noteBeforeChange.length
+            : newLength - storage.noteBeforeChange.length,
+      };
     } else {
       playSingleNote(data.noteNum);
       if (!data.noteClickedOn.isSelected) deselectAll();
@@ -260,26 +274,29 @@ const PianoRoll = ({
       data.location - storage.noteBeforeChange.xOffsetTicks,
     );
     const newLength = snap(data.location) - storage.noteBeforeChange.startTick;
-    const newNote =
-      tool === 'draw'
-        ? {
-            ...storage.noteBeforeChange,
-            length: newLength < tickDivision ? tickDivision : newLength,
-          }
-        : {
-            ...storage.noteBeforeChange,
-            noteNum: data.noteNum,
-            startTick: newStartTick < 0 ? 0 : newStartTick,
-          };
     deleteNote(storage.noteBeforeChange);
     if (tool === 'edit') playSingleNote(data.noteNum);
-    storage.cachedNewNote = newNote;
+    const { length, noteNum, startTick } = storage.noteBeforeChange;
+    storage.noteDelta =
+      tool === 'draw'
+        ? {
+            length:
+              newLength < tickDivision
+                ? tickDivision - length
+                : newLength - length,
+          }
+        : {
+            noteNum: data.noteNum - noteNum,
+            startTick: newStartTick < 0 ? -startTick : newStartTick - startTick,
+          };
   };
 
   const onNoteUp = () => {
-    if (storage.cachedNewNote) {
-      addNote(storage.cachedNewNote, { deselect: false });
-      storage.cachedNewNote = null;
+    if (storage.noteDelta) {
+      addNote(mergeWithDelta(storage.noteBeforeChange, storage.noteDelta), {
+        deselect: false,
+      });
+      storage.noteDelta = null;
     }
     storage.noteBeforeChange = null;
   };
