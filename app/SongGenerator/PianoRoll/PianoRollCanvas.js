@@ -120,8 +120,8 @@ class PianoRollCanvas {
           const [startTick, noteNum] = coord.path;
           hoveredNote = {
             ...this.notes[startTick][noteNum],
-            startTick,
-            noteNum,
+            startTick: parseInt(startTick, 10),
+            noteNum: parseInt(noteNum, 10),
             xOffsetTicks: this.pixelsToTicks(x - coord.x),
           };
         }
@@ -144,16 +144,12 @@ class PianoRollCanvas {
     const column = (x + this.scrollX - this.pianoWidth) / this.cellwidth;
     const noteNum = this.getNoteNumFromCoords(x, y);
     const noteClickedOn = this.noteAt(x, y);
+    const location = Math.floor(column * 128) - 2;
     return {
       noteClickedOn,
       noteNum,
+      location,
       piano: x <= this.pianoWidth,
-      newNote: {
-        noteNum,
-        startTick: Math.floor(column * 128) - 2,
-        length: 128,
-        velocity: 42,
-      },
       x,
       y,
     };
