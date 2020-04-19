@@ -150,8 +150,21 @@ const PianoRoll = ({
     storage.selectionsBeforeChange,
     storage.noteDelta,
   );
+
+  const limitedSelDelta = selDelta
+    ? selDelta.map(d => {
+        const minimum = selDelta.sort((a, b) => a.startTick - b.startTick)[0]
+          .startTick;
+        return {
+          ...d,
+          startTick: minimum < 0 ? d.startTick - minimum : d.startTick,
+        };
+      })
+    : null;
+
   const updatedNotes = mergeNotes(
-    selDelta || mergeWithDelta(storage.noteBeforeChange, storage.noteDelta),
+    limitedSelDelta ||
+      mergeWithDelta(storage.noteBeforeChange, storage.noteDelta),
     notes,
   );
 
