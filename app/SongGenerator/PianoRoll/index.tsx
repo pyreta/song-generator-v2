@@ -310,13 +310,14 @@ const PianoRoll = ({
     const newStartTick = snap(
       data.location - storage.noteBeforeChange.xOffsetTicks,
     );
-    // TODO REDRAW length on note draw on drag
+
     const newLength = snap(data.location) - storage.noteBeforeChange.startTick;
     if (storage.selectionsBeforeChange) {
       onNotesChange(seperateSelected(notes).notSelected);
     } else {
       deleteNote(storage.noteBeforeChange);
     }
+
     if (tool === 'edit') playSingleNote(data.noteNum);
     const { length, noteNum, startTick } = storage.noteBeforeChange;
     storage.noteDelta =
@@ -351,12 +352,13 @@ const PianoRoll = ({
   // ************************* Grid ************************* handlers
   const onGridDown = data => {
     if (tool === 'draw') {
-      addNote({
+      storage.noteBeforeChange = {
         noteNum: data.noteNum,
         startTick: snap(data.location),
         length: drawLength,
         velocity: drawVelocity,
-      });
+      };
+      addNote(storage.noteBeforeChange);
     } else {
       deselectAll();
     }
