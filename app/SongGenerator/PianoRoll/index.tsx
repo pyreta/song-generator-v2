@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import { dissocPath, assocPath } from 'ramda';
+import { dissocPath, assocPath, flatten } from 'ramda';
 import PRC from './PianoRollCanvas';
 
 const isRightClick = e => e.which === 3 || e.nativeEvent.which === 3;
@@ -9,17 +9,20 @@ const isRightClick = e => e.which === 3 || e.nativeEvent.which === 3;
 const storage = {
   ringingNote: null,
   noteBeforeChange: null,
+  selectionsBeforeChange: null,
   noteDelta: null,
 };
 
-const mergeNotes = (noteToMerge, notes) => {
-  if (!noteToMerge) return notes;
-  const { startTick, noteNum, ...lengthAndVelocity } = noteToMerge;
-  return assocPath(
-    [startTick.toString(), noteNum.toString()],
-    lengthAndVelocity,
-    notes,
-  );
+const mergeNotes = (notesToMerge, notes) => {
+  if (!notesToMerge) return notes;
+  return flatten([notesToMerge]).reduce((acc, noteToMerge) => {
+    const { startTick, noteNum, ...lengthAndVelocity } = noteToMerge;
+    return assocPath(
+      [startTick.toString(), noteNum.toString()],
+      lengthAndVelocity,
+      acc,
+    );
+  }, notes);
 };
 
 const mergeWithDelta = (note, delta) => {
@@ -30,6 +33,37 @@ const mergeWithDelta = (note, delta) => {
       [noteAttr]: note[noteAttr] + delta[noteAttr],
     };
   }, note);
+};
+
+const mergeSelectionsWithDelta = (notes, delta) => {
+  if (!notes || !delta) return null;
+  return notes.map(note => mergeWithDelta(note, delta));
+};
+
+const seperateSelected = notes => {
+  const selected = [];
+  const notSelected = Object.keys(notes).reduce((acc, location) => {
+    const notesAtLoc = notes[location];
+    return {
+      ...acc,
+      [location]: Object.keys(notesAtLoc).reduce((acc2, noteNum) => {
+        const note = notesAtLoc[noteNum];
+        if (note.isSelected) {
+          selected.push({
+            noteNum: parseInt(noteNum, 10),
+            startTick: parseInt(location, 10),
+            ...note,
+          });
+          return acc2;
+        }
+        return {
+          ...acc2,
+          [noteNum]: note,
+        };
+      }, {}),
+    };
+  }, {});
+  return { selected, notSelected };
 };
 
 const Wrapper = styled.div`
@@ -53,7 +87,6 @@ const YScroll = styled.input`
 /*
 TODO:
 volume
-group move
 grid highlighting by chord
 zoom behavior (stablized view and bugs)
 */
@@ -113,6 +146,15 @@ const PianoRoll = ({
   const maxScrollHeight = height * canvasHeightMultiple * zoomYAmount - height;
   const tickDivision = (4 / timeSignature[1]) * 128;
 
+  const selDelta = mergeSelectionsWithDelta(
+    storage.selectionsBeforeChange,
+    storage.noteDelta,
+  );
+  const updatedNotes = mergeNotes(
+    selDelta || mergeWithDelta(storage.noteBeforeChange, storage.noteDelta),
+    notes,
+  );
+
   const opts = {
     scrollX,
     scrollY,
@@ -127,10 +169,7 @@ const PianoRoll = ({
     pianoWidth,
     columnsPerQuarterNote,
     snapToGrid,
-    notes: mergeNotes(
-      mergeWithDelta(storage.noteBeforeChange, storage.noteDelta),
-      notes,
-    ),
+    notes: updatedNotes,
   };
 
   // ************************* Effects *************************
@@ -224,13 +263,8 @@ const PianoRoll = ({
     onNotesChange(delPath);
   };
 
-  const addNote = (note, options = { deselect: true }) => {
-    onNotesChange(
-      mergeNotes(
-        note,
-        options.deselect ? noteClassRef.current.deselectAll() : notes,
-      ),
-    );
+  const addNote = note => {
+    onNotesChange(mergeNotes(note, notes));
   };
 
   const playSingleNote = noteNum => {
@@ -254,6 +288,9 @@ const PianoRoll = ({
   // ************************* Note ************************* handlers
   const onNoteDown = data => {
     storage.noteBeforeChange = data.noteClickedOn;
+    if (storage.noteBeforeChange.isSelected) {
+      storage.selectionsBeforeChange = seperateSelected(notes).selected;
+    }
     if (tool === 'draw') {
       const newLength = snap(data.location) - data.noteClickedOn.startTick;
       deleteNote(data.noteClickedOn);
@@ -273,8 +310,13 @@ const PianoRoll = ({
     const newStartTick = snap(
       data.location - storage.noteBeforeChange.xOffsetTicks,
     );
+    // TODO REDRAW length on note draw on drag
     const newLength = snap(data.location) - storage.noteBeforeChange.startTick;
-    deleteNote(storage.noteBeforeChange);
+    if (storage.selectionsBeforeChange) {
+      onNotesChange(seperateSelected(notes).notSelected);
+    } else {
+      deleteNote(storage.noteBeforeChange);
+    }
     if (tool === 'edit') playSingleNote(data.noteNum);
     const { length, noteNum, startTick } = storage.noteBeforeChange;
     storage.noteDelta =
@@ -293,12 +335,11 @@ const PianoRoll = ({
 
   const onNoteUp = () => {
     if (storage.noteDelta) {
-      addNote(mergeWithDelta(storage.noteBeforeChange, storage.noteDelta), {
-        deselect: false,
-      });
+      onNotesChange(updatedNotes);
       storage.noteDelta = null;
     }
     storage.noteBeforeChange = null;
+    storage.selectionsBeforeChange = null;
   };
 
   const onNoteHover = data => {
@@ -316,6 +357,8 @@ const PianoRoll = ({
         length: drawLength,
         velocity: drawVelocity,
       });
+    } else {
+      deselectAll();
     }
   };
 
