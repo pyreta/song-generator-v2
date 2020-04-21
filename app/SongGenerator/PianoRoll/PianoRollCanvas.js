@@ -1,5 +1,15 @@
 import theme from '../../theme';
 
+// const colors = {
+//   scale: '#faf0e6',
+//   chordNotes: '#ffdab9',
+//   root: '#FF7F50',
+//   third: '#ffa54f',
+//   fifth: '#87ceff',
+//   seventh: '#b5f6da',
+//   line: '#949494',
+// };
+
 function rectsIntersect(r1, r2) {
   return !(r2.x1 > r1.x2 || r2.x2 < r1.x1 || r2.y1 > r1.y2 || r2.y2 < r1.y1);
 }
