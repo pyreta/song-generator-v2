@@ -1,12 +1,58 @@
-export default {
-  0: {
-    length: 512,
-    scale: [2, 4, 5, 7, 9, 11],
-    chord: {
-      root: 3,
-      third: 5,
-      fifth: 8,
-      seventh: 11,
-    },
+const chordData = [
+  {
+    scale: [
+      'scale',
+      null,
+      'root',
+      null,
+      'scale',
+      'third',
+      null,
+      'scale',
+      'chord',
+      'fifth',
+      null,
+      'seventh',
+    ],
+    root: 1,
+    length: 1024,
   },
-};
+  {
+    scale: [
+      'scale',
+      null,
+      'root',
+      null,
+      'scale',
+      'third',
+      null,
+      'scale',
+      'chord',
+      'fifth',
+      null,
+      'seventh',
+    ],
+    root: 3,
+    length: 1024,
+  },
+  {
+    scale: [
+      'scale',
+      'chord',
+      'fifth',
+      null,
+      'seventh',
+      'scale',
+      null,
+      'root',
+      null,
+      'scale',
+      'third',
+      null,
+    ],
+    root: 2,
+    length: 512,
+  },
+];
+
+export default chordData;

@@ -1,6 +1,4 @@
-import theme from '../../theme';
-
-// const colors = {
+// const originalColors = {
 //   scale: '#faf0e6',
 //   chordNotes: '#ffdab9',
 //   root: '#FF7F50',
@@ -9,6 +7,26 @@ import theme from '../../theme';
 //   seventh: '#b5f6da',
 //   line: '#949494',
 // };
+
+const colors = {
+  scale: '#2B383F',
+  chord: '#484842',
+  root: 'rgb(54, 41, 49)',
+  third: 'rgb(58, 51, 24)',
+  fifth: 'rgb(27, 55, 72)',
+  seventh: 'rgb(24, 55, 58)',
+  line: '#17242D',
+  background: '#09161D',
+  noteSelected: 'purple',
+  note: 'red',
+  blackKey: 'rgb(27, 55, 72)',
+  whiteKey: '#BDC2C4',
+  selection: 'rgba(0, 1, 127, 0.1',
+  playHead: 'rgb(15, 168, 209)',
+  border1: 'black',
+  border2: 'rgb(27, 55, 72)',
+  border3: '#FFFFFF',
+};
 
 function rectsIntersect(r1, r2) {
   return !(r2.x1 > r1.x2 || r2.x2 < r1.x1 || r2.y1 > r1.y2 || r2.y2 < r1.y1);
@@ -67,8 +85,8 @@ class PianoRollCanvas {
 
   drawSelection({ x1, y1, x2, y2 }) {
     this.clear();
-    this.ctx.fillStyle = 'rgba(0, 1, 127, 0.1';
-    this.ctx.strokeStyle = theme.titles;
+    this.ctx.fillStyle = colors.selection;
+    this.ctx.strokeStyle = colors.border3;
     this.ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
     this.ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
   }
@@ -194,8 +212,8 @@ class PianoRollCanvas {
   }
 
   drawNote(x, y, width, height, isSelected) {
-    this.ctx.fillStyle = isSelected ? 'purple' : 'red';
-    this.ctx.strokeStyle = isSelected ? 'black' : theme.selected;
+    this.ctx.fillStyle = isSelected ? colors.noteSelected : colors.note;
+    this.ctx.strokeStyle = isSelected ? colors.border1 : colors.border2;
     this.ctx.fillRect(x, y, width, height);
     this.ctx.strokeRect(x, y, width, height);
   }
@@ -221,30 +239,62 @@ class PianoRollCanvas {
     return 0.5;
   }
 
-  drawGrid() {
-    this.clear();
+  getNoteNumFromRow(row) {
+    return this.rows - row + this.bottomNote - 1;
+  }
+
+  drawMeasures() {
     const linesPerColumn = this.getLinesPerColumn();
     for (let row = 0; row < this.rows; row += 1) {
       const y = row * this.cellheight;
-      for (let column = 0; column < this.columns; column += linesPerColumn) {
+      for (let column = 0; column < 2; column += linesPerColumn) {
         const x = column * this.cellwidth;
         this.ctx.beginPath();
-        if (row % 2) {
-          this.ctx.fillStyle = theme.sections;
-        } else {
-          this.ctx.fillStyle = theme.background;
-        }
-        this.ctx.strokeStyle = theme.selected;
+        this.ctx.strokeStyle = colors.line;
         this.ctx.rect(
           x - this.scrollX + this.pianoWidth,
           y - this.scrollY,
           this.cellwidth * linesPerColumn,
           this.cellheight,
         );
-        this.ctx.fill();
         this.ctx.stroke();
       }
     }
+  }
+
+  drawChordGrid() {
+    let startTick = 0;
+    this.chords.forEach(chord => {
+      const chordPixelLength = this.ticksToPixels(chord.length);
+      for (let row = 0; row < this.rows; row += 1) {
+        const y = row * this.cellheight;
+        const x = startTick;
+        this.ctx.beginPath();
+        const modulod =
+          (this.getNoteNumFromRow(row) - (chord.root % chord.scale.length)) %
+          chord.scale.length;
+        if (chord.scale[modulod]) {
+          this.ctx.fillStyle = colors[chord.scale[modulod]];
+          this.ctx.rect(
+            x - this.scrollX + this.pianoWidth,
+            y - this.scrollY,
+            chordPixelLength,
+            this.cellheight,
+          );
+          this.ctx.fill();
+        }
+      }
+      startTick += chordPixelLength;
+    });
+  }
+
+  drawGrid() {
+    this.clear();
+    this.ctx.fillStyle = colors.background;
+    this.ctx.rect(0, 0, this.w, this.h);
+    this.ctx.fill();
+    this.drawChordGrid();
+    this.drawMeasures();
   }
 
   drawPiano() {
@@ -258,12 +308,12 @@ class PianoRollCanvas {
         case 6:
         case 8:
         case 10:
-          this.ctx.fillStyle = theme.selected;
+          this.ctx.fillStyle = colors.blackKey;
           break;
         default:
-          this.ctx.fillStyle = theme.paragraph;
+          this.ctx.fillStyle = colors.whiteKey;
       }
-      this.ctx.strokeStyle = theme.background;
+      this.ctx.strokeStyle = colors.line;
       this.ctx.rect(0, y - this.scrollY, this.pianoWidth, this.cellheight);
       this.ctx.fill();
       this.ctx.stroke();
@@ -276,7 +326,7 @@ class PianoRollCanvas {
     this.ctx.beginPath();
     this.ctx.moveTo(x, 0);
     this.ctx.lineWidth = 1;
-    this.ctx.strokeStyle = theme.action;
+    this.ctx.strokeStyle = colors.playHead;
     this.ctx.lineTo(x, this.h);
     this.ctx.shadowBlur = 0;
     this.ctx.stroke();

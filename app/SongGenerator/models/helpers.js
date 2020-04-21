@@ -36,7 +36,6 @@ export const getVoicing = (chord, { withRoot } = {}) => {
   return {
     noteNames: () => adjustedVoiceValues.map(n => notes[n % 12]),
     noteValues: () => adjustedVoiceValues,
-    signature: () => adjustedVoiceValues.join(),
   };
 }
 
@@ -88,7 +87,7 @@ export const matchChordVoicings = {
     } else {
       newVoice = nonbijective_vl(lastVoicing, chord.noteValues())[1].map(x => x[1] + (otherChord.get('octave') * 12));
     }
-    return chord.clone({ voicing: convertNotesToVoicing(chord, newVoice) });
+    return chord.clone({ voicing: convertNotesToVoicing(chord, newVoice)});
   },
 
   louisMethod: (chord, otherChord) => {

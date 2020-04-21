@@ -1,20 +1,18 @@
-// eslint-ignore-all
-
 import Chord from '../Chord';
 import { convertNotesToVoicing } from '../helpers';
 
 describe('Chord', () => {
-  const D_minor_in_C_Dorian = new Chord({ key: 0, scale: 'major', mode: 2, chord: 2, notes: { 1: 0, 3: 0, 5: 0 } });
-  const D_Major_in_Csharp_Phrygian = new Chord({ key: 1, scale: 'major', mode: 3, chord: 2, notes: { 1: 0, 3: 0, 5: 0 } });
+  const D_minor_in_C_Dorian = new Chord({ key: 0, scale: 'major', mode: 2, chord: 2, notes: { 1: 0, 3: 0, 5: 0 }});
+  const D_Major_in_Csharp_Phrygian = new Chord({ key: 1,  scale: 'major', mode: 3,  chord: 2, notes: { 1: 0, 3: 0, 5: 0 } });
   const DsharpDim_in_Dsharp_Locrian = new Chord({ key: 3, scale: 'minor', mode: 2, chord: 1, notes: { 1: 0, 3: 0, 5: 0 } });
-  const E7_in_PhrygDom = new Chord({ key: 4, scale: 'harmonicMinor', mode: 5, chord: 1, notes: { 1: 0, 3: 0, 5: 0, 7: 0 } });
-  const Fsharp_minorMajor7_in_HarmonicMinor = new Chord({ key: 6, scale: 'harmonicMinor', mode: 1, chord: 1, notes: { 1: 0, 3: 0, 5: 0, 7: 0 } });
+  const E7_in_PhrygDom = new Chord({ key: 4, scale: 'harmonicMinor', mode: 5, chord: 1, notes: { 1: 0, 3: 0, 5: 0, 7:0 } });
+  const Fsharp_minorMajor7_in_HarmonicMinor = new Chord({ key: 6, scale: 'harmonicMinor', mode: 1, chord: 1, notes: { 1: 0, 3: 0, 5: 0, 7:0 } });
   const Em9inC = new Chord({ key: 0, scale: 'major', mode: 1, chord: 3, notes: { 1: 0, 3: 0, 5: 0, 7: 0, 9: 0 } });
   const Esus2inC = new Chord({ key: 0, scale: 'major', mode: 1, chord: 3, notes: { 1: 0, 2: 0, 5: 0 } });
   const AMsus2 = new Chord({ key: 9, scale: 'major', mode: 1, chord: 1, notes: { 1: 0, 2: 0, 5: 0 } });
   const FMsus4 = new Chord({ key: 0, scale: 'major', mode: 1, chord: 4, notes: { 1: 0, 4: 0, 5: 0 } });
-  const G7 = new Chord({key: 0, scale: 'major', mode: 1, chord: 5, notes: { 1: 0, 3: 0, 5: 0, 7: 0 } });
-  const A7 = new Chord({key: 2, scale: 'major', mode: 1, chord: 5, notes: { 1: 0, 3: 0, 5: 0, 7: 0 } });
+  const G7 = new Chord( {key: 0, scale: 'major', mode: 1, chord: 5, notes: { 1: 0, 3: 0, 5: 0, 7: 0 } });
+  const A7 = new Chord( {key: 2, scale: 'major', mode: 1, chord: 5, notes: { 1: 0, 3: 0, 5: 0, 7: 0 } });
 
   it('has a key', () => {
     expect(D_minor_in_C_Dorian.key().name()).toEqual('C');

@@ -5,6 +5,7 @@ import WebMidi from 'webmidi';
 import PianoRoll from './PianoRoll';
 import Transport from './Transport';
 import { trackData1, trackData2 } from './trackData';
+import chordData from './chordData';
 import { exportMidi, playMidi } from './helpers';
 
 const Wrapper = styled.div`
@@ -19,6 +20,7 @@ const SongGenerator = props => {
   const [width, setWidth] = useState(2000);
   const [height, setHeight] = useState(400);
   const [notes, setNotes] = useState(trackData1.ticks);
+  const [chords, setChords] = useState(chordData);
   const [outputId, setOutputId] = useState(trackData1.outputDevice);
   const sizeRef = useRef();
   const tracks = [{ outputDevice: outputId, name: 'Willy', ticks: notes }];
@@ -56,6 +58,7 @@ const SongGenerator = props => {
           columns={128}
           columnsPerQuarterNote={1}
           notes={notes}
+          chords={chords}
           onNotesChange={setNotes}
           onDeviceChange={setOutputId}
           onPianoKeyDown={note =>

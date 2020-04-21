@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import Scale from './Scale';
-import Progression from './Progression';
+// import Progression from './Progression';
 import chordProbabilities from './hookTheory/chordProbabilities';
 import chordDictionary from '../constants/chordDictionary';
 import {
@@ -28,8 +28,6 @@ const defaultChord = {
   chord: 1,
   notes: { 1: 0, 3: 0, 5: 0 },
 };
-
-let count = 0;
 
 class Chord {
   static newChordFromScale(chord, scale, progression) {
@@ -59,10 +57,9 @@ class Chord {
       (acc, n) => ({ ...acc, [n]: [0] }),
       {},
     );
-    count += 1;
-    this.id = count;
     this.chord.voicing = this.chord.voicing || voicing;
-    this.progression = progression || new Progression([chord]);
+    // this.progression = progression || new Progression([chord]);
+    this.progression = progression;
   }
 
   clone(attrs = {}) {
@@ -91,9 +88,9 @@ class Chord {
     ).addNote(7);
   }
 
-  secondary(chord, chordOptions) {
+  secondary(chord = 0, chordOptions) {
     if (chord) {
-      return [new Chord(
+      return new Chord(
         {
           notes: this.get('notes'),
           ...chordOptions,
@@ -101,28 +98,26 @@ class Chord {
           chord,
         },
         this.progression,
-      ), this];
+      );
     }
-    return [this];
+    return this;
   }
 
   tritoneSubstitution() {
     // TODO take scales into account
-    const n = { 1: 0, 3: 0, 5: 0, 7: 0 };
-    return this.set('key', this.get('key') + 6).setNotes(n);
+    const newNotes = { 1: 0, 3: 0, 5: 0, 7: 0 };
+    return this.set('key', this.get('key') + 6).setNotes(newNotes);
   }
 
   diminishedSubstitution() {
     // TODO take scales into account
-    const n = { 1: 0, 3: -1, 5: -1, 7: -1 };
-    return this.set('key', this.get('key') + 4).set('chord', 1).setNotes(n);
+    const newNotes = { 1: 0, 3: -1, 5: -1, 7: -1 };
+    return this.set('key', this.get('key') + 4).setNotes(newNotes);
   }
 
   incrementKey(add = 1) {
-    let key = this.get('key') + add;
-    if (key < 0) key += 12;
     return new Chord(
-      { ...this.chord, key },
+      { ...this.chord, key: this.get('key') + add },
       this.progression,
     );
   }
@@ -131,9 +126,14 @@ class Chord {
     return [this.makeDominantFifth().incrementKey(), this.clone()];
   }
 
-  chromaticMediants = () => (
-    [this.incrementKey(-4), this.incrementKey(-3), this.incrementKey(3), this.incrementKey(4)]
-  )
+  chromaticMediants() {
+    return [
+      this.incrementKey(-4),
+      this.incrementKey(-3),
+      this.incrementKey(3),
+      this.incrementKey(4),
+    ];
+  }
 
   conjugateMinorSubstitution() {
     // TODO do!
@@ -170,8 +170,8 @@ class Chord {
 
   // ****************** change chord
 
-  setNotes(notes) {
-    return new Chord({ ...this.chord, notes }, this.progression);
+  setNotes(newNotes) {
+    return new Chord({ ...this.chord, notes: newNotes }, this.progression);
   }
 
   addNote(interval, value = 0) {
@@ -183,9 +183,9 @@ class Chord {
   }
 
   removeNote(interval) {
-    const notes = { ...this.get('notes') };
-    delete notes[interval];
-    return this.setNotes(notes);
+    const newNotes = { ...this.get('notes') };
+    delete newNotes[interval];
+    return this.setNotes(newNotes);
   }
 
   get(attr) {
@@ -198,13 +198,13 @@ class Chord {
   }
 
   getScale() {
-    const chordReference = this;
-    return new Scale(scales[this.chord.scale], chordReference);
+    // const chordReference = this;
+    return new Scale(scales[this.chord.scale], this);
   }
 
   getMode() {
-    const chordReference = this;
-    return this.getScale().getMode(this.chord.mode, chordReference);
+    // const chordReference = this;
+    return this.getScale().getMode(this.chord.mode, this);
   }
 
   getNoteFromInterval(i, n) {
@@ -212,7 +212,7 @@ class Chord {
     const interval = intervals[i];
     const intervalAdjustment = this.get('notes')[n];
     const mod = notes.length * 2;
-    return root + interval + intervalAdjustment % mod;
+    return root + interval + (intervalAdjustment % mod);
   }
 
   getDiatonicNote(n) {
@@ -222,7 +222,7 @@ class Chord {
     const interval = extendedIntervals[intervalIdx];
     const intervalAdjustment = this.get('notes')[n];
     const mod = notes.length * 2;
-    return interval + intervalAdjustment + key % mod;
+    return interval + intervalAdjustment + (key % mod);
   }
 
   noteValues() {
@@ -246,8 +246,8 @@ class Chord {
 
   root() {
     const noteIdx = this.get('chord') - 1;
-    const intervals = this.getMode().intervalsFromRoot();
-    const value = this.chord.key + intervals[noteIdx];
+    const ints = this.getMode().intervalsFromRoot();
+    const value = this.chord.key + ints[noteIdx];
     const name = notes[value % 12];
     return {
       name: () => name,
@@ -264,15 +264,17 @@ class Chord {
 
   analyze() {
     const analysis = {};
-    const intervals = Object.keys(this.chord.notes)
-      .map(i => parseInt(i, 10))
+    const ints = Object.keys(this.chord.notes)
+      .map(i => {
+        return parseInt(i, 10);
+      })
       .sort(ascending)
       .slice(1);
     const intervalValues = this.noteValues()
       .map(i => i - this.root().value())
       .sort(ascending)
       .slice(1);
-    intervals.forEach((int, idx) => {
+    ints.forEach((int, idx) => {
       analysis[int] = intervalTypes[intervalValues[idx]][int];
     });
     return analysis;
@@ -283,15 +285,16 @@ class Chord {
     return Object.keys(analysis)
       .map(i => parseInt(i, 10))
       .sort(ascending)
-      .reduce((signature, interval) => (
-        signature + analysis[interval] + interval
-      ), '');
+      .reduce((signature, interval) => {
+        return signature + analysis[interval] + interval;
+      }, '');
   }
 
   isValid() {
     const sig = this.signature();
     const validity = !!chordDictionary[sig];
     if (validity) return validity;
+    return false;
     // console.log('missing:', sig);
     // console.log('');
   }
@@ -335,11 +338,18 @@ class Chord {
     if (def) {
       const numeral = romanNumerals[this.get('chord') - 1];
       return def.getRomanNumeral(
-        this.isMajor() ? numeral.toUpperCase() : numeral
+        this.isMajor() ? numeral.toUpperCase() : numeral,
       );
     }
     return '';
   }
+  //
+  // romanNumeral() {
+  //   const numeral = romanNumerals[this.get('chord') - 1];
+  //   return this.chordDefinition().getRomanNumeral(
+  //     this.isMajor() ? numeral.toUpperCase() : numeral,
+  //   );
+  // }
 
   inversion() {
     const bassNote = this.voicing().noteNames()[0];
@@ -362,20 +372,20 @@ class Chord {
     return lastVoicing.map(x => Math.abs(x - closestNote));
   }
 
-  matchVoicingToChord({ lastPlayedChord, method = 'bijective' }) {
-    // const lowestChord = lastPlayedChord
-    //   .resetVoicing({ chord: 6 })
-    //   .shiftOctave(-1);
-    // const highestChord = lastPlayedChord.resetVoicing({ chord: 7 });
-    let c = matchChordVoicings[method](this, lastPlayedChord);
-    // const firstNote = c.voicing().noteValues()[0];
+  matchVoicingToChord({ lastPlayedChord, method = 'louisMethod' }) {
+    const lowestChord = lastPlayedChord
+      .resetVoicing({ chord: 6 })
+      .shiftOctave(-1);
+    const highestChord = lastPlayedChord.resetVoicing({ chord: 7 });
+    const c = matchChordVoicings[method](this, lastPlayedChord);
+    const firstNote = c.voicing().noteValues()[0];
 
-    // if (firstNote < lowestChord.voicing().noteValues()[0]) {
-    //   return matchChordVoicings[method](this, lowestChord);
-    // }
-    // if (firstNote > highestChord.voicing().noteValues()[0]) {
-    //   return matchChordVoicings[method](this, highestChord);
-    // }
+    if (firstNote < lowestChord.voicing().noteValues()[0]) {
+      return matchChordVoicings[method](this, lowestChord);
+    }
+    if (firstNote > highestChord.voicing().noteValues()[0]) {
+      return matchChordVoicings[method](this, highestChord);
+    }
     return c;
   }
 
@@ -386,7 +396,7 @@ class Chord {
   setInversion(n) {
     const vals = this.voicing().noteValues();
     const resetVoice = rotateVoice(vals, vals.length - this.inversion()).map(
-      n => n - 12,
+      notee => notee - 12,
     );
     const newV = rotateVoice(resetVoice, n % vals.length);
     return this.clone({ voicing: convertNotesToVoicing(this, newV) });
@@ -463,17 +473,20 @@ class Chord {
     return 'unknown';
   }
 
-  id({chord = this, showInversion } = {}) {
+  id({ chord = this, showInversion } = {}) {
     const type = this.type();
     if (type === 'unknown') return type;
-    let interval = this.noteValues()[0] % 12 - chord.get('key');
+    let interval = (this.noteValues()[0] % 12) - chord.get('key');
     if (interval < 0) interval += 12;
     const inversion = showInversion ? this.inversion() : 0;
     return `${interval}${this.type()}${inversion}`;
   }
 
   nextChordProbability(nextChord, { showInversion } = {}) {
-    const [thisId, nextId] = [this.id({ showInversion }), nextChord.id({ chord: this, showInversion })];
+    const [thisId, nextId] = [
+      this.id({ showInversion }),
+      nextChord.id({ chord: this, showInversion }),
+    ];
     if (
       thisId === 'unknown' ||
       nextId === 'unknown' ||
@@ -484,7 +497,9 @@ class Chord {
     return chordProbabilities[thisId][nextId];
   }
 
-  equals = (otherChord) => this.voicing().signature() === otherChord.voicing().signature()
+  equals(otherChord) {
+    return this.voicing().signature() === otherChord.voicing().signature();
+  }
 }
 
 export default Chord;

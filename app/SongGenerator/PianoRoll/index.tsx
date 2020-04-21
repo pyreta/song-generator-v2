@@ -100,6 +100,7 @@ const PianoRoll = ({
   columns,
   columnsPerQuarterNote,
   notes,
+  chords,
   outputOptions,
   outputId,
   onDeviceChange,
@@ -182,6 +183,7 @@ const PianoRoll = ({
     pianoWidth,
     columnsPerQuarterNote,
     snapToGrid,
+    chords,
     notes: updatedNotes,
   };
 
@@ -230,6 +232,7 @@ const PianoRoll = ({
     pianoWidth,
     columnsPerQuarterNote,
     snapToGrid,
+    chords,
   ]);
 
   useEffect(() => {
@@ -385,6 +388,7 @@ const PianoRoll = ({
         x2: mouseIsDown.x > data.x ? mouseIsDown.x : data.x,
         y2: mouseIsDown.y > data.y ? mouseIsDown.y : data.y,
       };
+      if (coords.x1 < pianoWidth + 1) coords.x1 = pianoWidth + 1;
       if (coords.x2 - coords.x1 > 3 && coords.y2 - coords.y1 > 3) {
         setSelectionCoords(coords);
       }
@@ -460,7 +464,7 @@ const PianoRoll = ({
   const onMouseMove = e => {
     const data = analyzeMousePosition(e);
     if (mouseIsDown) {
-      if (data.piano) return onPianoDown(data);
+      if (data.piano) onPianoDown(data);
       if (storage.noteBeforeChange) return onNoteDrag(data);
       return onGridDrag(data);
     }
@@ -590,6 +594,7 @@ PianoRoll.propTypes = {
   canvasWidthMultiple: PropTypes.number.isRequired,
   canvasHeightMultiple: PropTypes.number.isRequired,
   outputOptions: PropTypes.array.isRequired, // eslint-disable-line
+  chords: PropTypes.array.isRequired, // eslint-disable-line
   outputId: PropTypes.string.isRequired,
   onDeviceChange: PropTypes.func.isRequired,
   onPianoKeyDown: PropTypes.func.isRequired,
