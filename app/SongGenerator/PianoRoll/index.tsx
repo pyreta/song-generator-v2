@@ -118,6 +118,7 @@ const PianoRoll = ({
   const noteRef = useRef();
   const gridRef = useRef();
   const pianoRef = useRef();
+  const headerAndFooterRef = useRef();
   const noteClassRef = useRef();
   const selectionRef = useRef();
 
@@ -156,7 +157,7 @@ const PianoRoll = ({
     storage.noteDelta,
   );
 
-  const limitedSelDelta = selDelta
+  const selectionDeltaWithoutNegativeStartTicks = selDelta
     ? selDelta.map(d => {
         const minimum = selDelta.sort((a, b) => a.startTick - b.startTick)[0]
           .startTick;
@@ -168,7 +169,7 @@ const PianoRoll = ({
     : null;
 
   const updatedNotes = mergeNotes(
-    limitedSelDelta ||
+    selectionDeltaWithoutNegativeStartTicks ||
       mergeWithDelta(storage.noteBeforeChange, storage.noteDelta),
     notes,
   );
@@ -214,6 +215,25 @@ const PianoRoll = ({
     octaves,
     columns,
     pianoWidth,
+    columnsPerQuarterNote,
+    snapToGrid,
+  ]);
+
+  useEffect(() => {
+    const canvas = headerAndFooterRef.current;
+    const pianoRoll = new PRC(canvas, opts);
+    pianoRoll.drawHeadersAndFooters();
+  }, [
+    scrollX,
+    scrollY,
+    zoomXAmount,
+    zoomYAmount,
+    width,
+    height,
+    canvasWidthMultiple,
+    canvasHeightMultiple,
+    octaves,
+    columns,
     columnsPerQuarterNote,
     snapToGrid,
   ]);
@@ -558,8 +578,9 @@ const PianoRoll = ({
         <Canvas ref={gridRef} width={width} height={height} />
         <Canvas ref={noteRef} width={width} height={height} />
         <Canvas ref={selectionRef} width={width} height={height} />
+        <Canvas ref={pianoRef} width={width} height={height} />
         <Canvas
-          ref={pianoRef}
+          ref={headerAndFooterRef}
           width={width}
           height={height}
           onMouseDown={onMouseDown}

@@ -8,6 +8,9 @@
 //   line: '#949494',
 // };
 
+// chord_color_dict = {'C':'steel blue', 'C#':'firebrick3', 'D':'DarkOrchid3', 'D#':'dark orange', 'E':'sea green', 'F':'thistle4',
+// 	'F#':'tomato', 'G':'blue2', 'G#':'light goldenrod', 'A':'yellow4', 'A#':'dark green', 'B':'brown4'}
+
 const colors = {
   scale: '#2B383F',
   chord: '#484842',
@@ -17,13 +20,13 @@ const colors = {
   seventh: 'rgb(24, 55, 58)',
   line: '#17242D',
   background: '#09161D',
-  noteSelected: 'purple',
+  noteSelected: 'yellow',
   note: 'red',
   blackKey: 'rgb(27, 55, 72)',
   whiteKey: '#BDC2C4',
   selection: 'rgba(0, 1, 127, 0.1',
   playHead: 'rgb(15, 168, 209)',
-  border1: 'black',
+  border1: 'orange',
   border2: 'rgb(27, 55, 72)',
   border3: '#FFFFFF',
 };
@@ -39,6 +42,9 @@ class PianoRollCanvas {
       octaves = 7,
       columns = 64,
       pianoWidth = 100,
+      barsHeight = 40,
+      chordsHeight = 30,
+      velocityHeight = 160,
       columnsPerQuarterNote = 1,
       scrollX = 0,
       scrollY = 0,
@@ -56,9 +62,17 @@ class PianoRollCanvas {
   ) {
     this.ctx = canvas.getContext('2d');
     this.canvas = canvas;
+    this.headerHeight = barsHeight + chordsHeight;
+    this.footerHeight = velocityHeight;
     this.w = width * zoomXAmount * canvasWidthMultiple - pianoWidth;
-    this.h = height * zoomYAmount * canvasHeightMultiple;
+    this.h =
+      height * zoomYAmount * canvasHeightMultiple -
+      this.headerHeight -
+      this.footerHeight;
     this.pianoWidth = pianoWidth;
+    this.barsHeight = barsHeight;
+    this.chordsHeight = chordsHeight;
+    this.velocityHeight = velocityHeight;
     this.rows = octaves * 12;
     this.notes = notes;
     this.columns = columns;
@@ -203,7 +217,7 @@ class PianoRollCanvas {
     Object.keys(notes).forEach(noteNum => {
       const row = this.getNoteRow(noteNum);
       const width = this.ticksToPixels(parseInt(notes[noteNum].length, 10));
-      const y = this.cellheight * row - this.scrollY;
+      const y = this.cellheight * row - this.scrollY + this.headerHeight;
       const height = this.cellheight;
       this.drawNote(x, y, width, height, notes[noteNum].isSelected);
       coords.push({ x, y, width, height, path: [startTick, noteNum] });
@@ -262,7 +276,7 @@ class PianoRollCanvas {
     }
   }
 
-  drawMeasures() {
+  drawMeasuresGrid() {
     this.drawBars(2, colors.line);
     this.drawBars(4, colors.background);
   }
@@ -272,7 +286,7 @@ class PianoRollCanvas {
     this.chords.forEach(chord => {
       const chordPixelLength = this.ticksToPixels(chord.length);
       for (let row = 0; row < this.rows; row += 1) {
-        const y = row * this.cellheight;
+        const y = row * this.cellheight + this.headerHeight;
         const x = startTick;
         this.ctx.beginPath();
         const modulod =
@@ -299,7 +313,59 @@ class PianoRollCanvas {
     this.ctx.rect(0, 0, this.w, this.h);
     this.ctx.fill();
     this.drawChordGrid();
-    this.drawMeasures();
+    this.drawMeasuresGrid();
+  }
+
+  drawHeadersAndFooters() {
+    this.clear();
+    this.drawMeasuresHeader();
+    this.drawChordHeader();
+    this.drawVelocity();
+  }
+
+  drawChordHeader() {
+    this.ctx.fillStyle = colors.background;
+    this.ctx.strokeStyle = 'orange';
+    this.ctx.fillRect(0, 0, this.w, this.barsHeight);
+    this.ctx.strokeRect(0, 0, this.w, this.barsHeight);
+  }
+
+  drawVelocity() {
+    this.ctx.fillStyle = colors.blackKey;
+    this.ctx.strokeStyle = colors.whiteKey;
+    this.ctx.fillRect(
+      0,
+      this.canvas.height - this.velocityHeight,
+      this.pianoWidth,
+      this.canvas.height,
+    );
+    this.ctx.strokeRect(
+      0,
+      this.canvas.height - this.velocityHeight,
+      this.pianoWidth,
+      this.canvas.height,
+    );
+    this.ctx.fillStyle = colors.whiteKey;
+    this.ctx.strokeStyle = colors.blackKey;
+    this.ctx.fillRect(
+      this.pianoWidth,
+      this.canvas.height - this.velocityHeight,
+      this.w,
+      this.canvas.height,
+    );
+    this.ctx.strokeRect(
+      this.pianoWidth,
+      this.canvas.height - this.velocityHeight,
+      this.w,
+      this.canvas.height,
+    );
+  }
+
+  drawMeasuresHeader() {
+    this.ctx.fillStyle = colors.blackKey;
+    this.ctx.strokeStyle = colors.whiteKey;
+    this.ctx.fillRect(0, this.barsHeight, this.w, this.chordsHeight);
+    this.ctx.strokeRect(0, this.barsHeight, this.w, this.chordsHeight);
   }
 
   drawPiano() {
@@ -319,7 +385,12 @@ class PianoRollCanvas {
           this.ctx.fillStyle = colors.whiteKey;
       }
       this.ctx.strokeStyle = colors.line;
-      this.ctx.rect(0, y - this.scrollY, this.pianoWidth, this.cellheight);
+      this.ctx.rect(
+        0,
+        y - this.scrollY + this.headerHeight,
+        this.pianoWidth,
+        this.cellheight,
+      );
       this.ctx.fill();
       this.ctx.stroke();
     }
