@@ -10,7 +10,7 @@ import { exportMidi, playMidi } from './helpers';
 
 const Wrapper = styled.div`
   max-height: 75vh;
-  max-width: 75vw;
+  max-width: 90vw;
   height: 2000px;
   width: 1500px;
 `;

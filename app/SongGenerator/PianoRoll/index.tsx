@@ -70,6 +70,10 @@ const Wrapper = styled.div`
   position: relative;
 `;
 
+const Flex = styled.div`
+  display: flex;
+`;
+
 const Canvas = styled.canvas`
   border: 1px solid black;
   position: absolute;
@@ -521,33 +525,35 @@ const PianoRoll = ({
         />
         {`Zoom Y: ${zoomYAmount}`}
       </div>
-      <div>
-        <input
-          type="checkbox"
-          onChange={e => setSnapToGrid(e.target.checked)}
-          checked={snapToGrid}
-        />
-        Snap to grid
-      </div>
-      <div>
-        <input
-          type="checkbox"
-          onChange={e => setTool(e.target.checked ? 'draw' : 'edit')}
-          checked={tool === 'draw'}
-        />
-        Draw
-      </div>
+      <Flex>
+        <div>
+          <input
+            type="checkbox"
+            onChange={e => setSnapToGrid(e.target.checked)}
+            checked={snapToGrid}
+          />
+          Snap to grid
+        </div>
+        <div>
+          <input
+            type="checkbox"
+            onChange={e => setTool(e.target.checked ? 'draw' : 'edit')}
+            checked={tool === 'draw'}
+          />
+          Draw
+        </div>
+        <select value={outputId} onChange={e => onDeviceChange(e.target.value)}>
+          {outputOptions.map(({ name, id }) => (
+            <option key={id} value={id}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <button type="button" onClick={() => console.log(notes)}>
+          NOTES
+        </button>
+      </Flex>
 
-      <select value={outputId} onChange={e => onDeviceChange(e.target.value)}>
-        {outputOptions.map(({ name, id }) => (
-          <option key={id} value={id}>
-            {name}
-          </option>
-        ))}
-      </select>
-      <button type="button" onClick={() => console.log(notes)}>
-        NOTES
-      </button>
       <Wrapper onWheel={onWheel} style={{ width, height }}>
         <Canvas ref={gridRef} width={width} height={height} />
         <Canvas ref={noteRef} width={width} height={height} />

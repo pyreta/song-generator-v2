@@ -1,9 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import styled from 'styled-components';
+
+const Div = styled.div`
+  display: flex;
+`;
 
 const Transport = ({ onPlay, onExport, setBpm, bpm }) => {
   return (
-    <>
+    <Div>
       <button onClick={onPlay} type="submit">
         PLAY
       </button>
@@ -20,7 +25,7 @@ const Transport = ({ onPlay, onExport, setBpm, bpm }) => {
         />
         {`bpm: ${bpm}`}
       </div>
-    </>
+    </Div>
   );
 };
 

@@ -243,23 +243,28 @@ class PianoRollCanvas {
     return this.rows - row + this.bottomNote - 1;
   }
 
-  drawMeasures() {
-    const linesPerColumn = this.getLinesPerColumn();
-    for (let row = 0; row < this.rows; row += 1) {
-      const y = row * this.cellheight;
-      for (let column = 0; column < 2; column += linesPerColumn) {
-        const x = column * this.cellwidth;
+  drawBars(drawEvery, color, lineWidth) {
+    for (let column = 1; column <= this.columns; column += 1) {
+      if (column % drawEvery === 0) {
         this.ctx.beginPath();
-        this.ctx.strokeStyle = colors.line;
-        this.ctx.rect(
-          x - this.scrollX + this.pianoWidth,
-          y - this.scrollY,
-          this.cellwidth * linesPerColumn,
-          this.cellheight,
+        this.ctx.strokeStyle = color;
+        this.ctx.moveTo(
+          column * this.cellwidth + this.pianoWidth - this.scrollX,
+          0,
+        );
+        this.ctx.lineWidth = lineWidth || 1;
+        this.ctx.lineTo(
+          column * this.cellwidth + this.pianoWidth - this.scrollX,
+          this.h,
         );
         this.ctx.stroke();
       }
     }
+  }
+
+  drawMeasures() {
+    this.drawBars(2, colors.line);
+    this.drawBars(4, colors.background);
   }
 
   drawChordGrid() {

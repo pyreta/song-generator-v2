@@ -1,5 +1,7 @@
 const chordData = [
   {
+    name: 'A Major 7th flat 9',
+    abreviation: 'AM7♭9',
     scale: [
       'scale',
       null,
@@ -18,6 +20,8 @@ const chordData = [
     length: 1024,
   },
   {
+    name: 'C Dominant 9th',
+    abreviation: 'C7♯9',
     scale: [
       'scale',
       null,
@@ -36,6 +40,8 @@ const chordData = [
     length: 1024,
   },
   {
+    name: 'G Major',
+    abreviation: 'G',
     scale: [
       'scale',
       'chord',
