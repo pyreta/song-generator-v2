@@ -12,8 +12,6 @@
 // 	'F#':'tomato', 'G':'blue2', 'G#':'light goldenrod', 'A':'yellow4', 'A#':'dark green', 'B':'brown4'}
 
 const colors = {
-  scale: '#2B383F',
-  chord: '#484842',
   root: 'rgb(54, 41, 49)',
   third: 'rgb(58, 51, 24)',
   fifth: 'rgb(27, 55, 72)',
@@ -29,7 +27,26 @@ const colors = {
   border1: 'orange',
   border2: 'rgb(27, 55, 72)',
   border3: '#FFFFFF',
+  scale: '#2B383F',
+  chord: '#484842',
 };
+
+// const chordColors = Object.values(colors).slice(0, 12);
+
+const chordColors = [
+  '#FE4365',
+  '#FC9D9A',
+  '#F9CDAD',
+  '#C8C8A9',
+  '#83AF9B',
+  '#A7226E',
+  '#EC2049',
+  '#F26B38',
+  '#F7DB4F',
+  '#2F9599',
+  '#FC913A',
+  '#FF4E50',
+];
 
 function rectsIntersect(r1, r2) {
   return !(r2.x1 > r1.x2 || r2.x2 < r1.x1 || r2.y1 > r1.y2 || r2.y2 < r1.y1);
@@ -43,7 +60,7 @@ class PianoRollCanvas {
       columns = 64,
       pianoWidth = 100,
       barsHeight = 20,
-      chordsHeight = 30,
+      chordsHeight = 40,
       velocityHeight = 30,
       columnsPerQuarterNote = 1,
       scrollX = 0,
@@ -291,22 +308,65 @@ class PianoRollCanvas {
         this.ctx.beginPath();
         const rowNote = this.getNoteNumFromRow(row);
         const modulod =
-          (rowNote - (chord.root % chord.scale.length)) % chord.scale.length;
+          (rowNote - (chord.key % chord.scale.length)) % chord.scale.length;
         if (chord.scale[modulod]) {
-          this.ctx.fillStyle = colors[chord.scale[modulod]];
+          this.ctx.fillStyle = colors[chord.scale[modulod]] || colors.chord;
           const rectX = x - this.scrollX + this.pianoWidth;
           const rectY = y - this.scrollY;
           this.ctx.rect(rectX, rectY, chordPixelLength, this.cellheight);
           this.ctx.fill();
-          if (rowNote % 12 === chord.root) {
+          if (rowNote % 12 === chord.key) {
             this.ctx.fillStyle = colors.border1;
             this.ctx.fillRect(
               rectX,
-              rectY + this.cellheight - 2,
+              rectY + this.cellheight - 3,
               chordPixelLength,
-              1,
+              3,
             );
           }
+        }
+      }
+      startTick += chordPixelLength;
+    });
+  }
+
+  drawChordHeader() {
+    let startTick = 0;
+    this.chords.forEach((chord, idx) => {
+      const chordPixelLength = this.ticksToPixels(chord.length);
+      for (let row = 0; row < this.rows; row += 1) {
+        const x = startTick;
+        const rowNote = this.getNoteNumFromRow(row);
+        const modulod =
+          (rowNote - (chord.key % chord.scale.length)) % chord.scale.length;
+        if (chord.scale[modulod]) {
+          const rectX = x - this.scrollX + this.pianoWidth;
+          this.ctx.fillStyle = chordColors[chord.root];
+          this.ctx.fillRect(
+            idx === 0 ? rectX : rectX + 1,
+            0,
+            chordPixelLength,
+            this.chordsHeight,
+          );
+          this.ctx.fillStyle = colors.background;
+          this.ctx.fillRect(
+            rectX + chordPixelLength - 1,
+            0,
+            2,
+            this.chordsHeight,
+          );
+          this.ctx.fillStyle = colors.background;
+          this.ctx.font = '20px Helvetica';
+          this.ctx.textAlign = 'center';
+          const chordName = `${chord.name} (${chord.romanNumeral})`;
+          const textWidth = this.ctx.measureText(chordName).width;
+          const name =
+            chordPixelLength < textWidth + 100 ? chord.abreviation : chordName;
+          this.ctx.fillText(
+            name,
+            rectX + chordPixelLength / 2,
+            this.chordsHeight / 2 + 5,
+          );
         }
       }
       startTick += chordPixelLength;
@@ -324,20 +384,15 @@ class PianoRollCanvas {
 
   drawHeadersAndFooters() {
     this.clear();
-    this.ctx.fillStyle = colors.scale;
-    this.ctx.fillRect(0, 0, this.pianoWidth, this.headerHeight);
     this.drawMeasuresHeader();
     this.drawChordHeader();
     this.drawVelocity();
-  }
-
-  drawChordHeader() {
-    this.ctx.fillStyle = colors.background;
-    this.ctx.fillRect(this.pianoWidth, 0, this.w, this.chordsHeight);
+    this.ctx.fillStyle = colors.scale;
+    this.ctx.fillRect(0, 0, this.pianoWidth, this.headerHeight);
   }
 
   drawMeasuresHeader() {
-    this.ctx.fillStyle = colors.whiteKey;
+    this.ctx.fillStyle = colors.blackKey;
     this.ctx.fillRect(
       this.pianoWidth,
       this.chordsHeight,

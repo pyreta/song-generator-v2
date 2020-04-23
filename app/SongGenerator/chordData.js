@@ -27,13 +27,13 @@ const chordData = [
     mode: 4,
     chord: 1,
     notes: { 1: 0, 3: 0, 5: 0, 7: 0 },
-  }).pianoRollData({ length: 512 }),
+  }).pianoRollData({ length: 128 }),
   new Chord({
     key: 2,
     scale: 'minor',
     mode: 1,
     chord: 5,
-    notes: { 1: 0, 2: 0, 5: -1, 7: 0 },
+    notes: { 1: 0, 2: 0, 5: 0, 7: 0 },
   }).pianoRollData({ length: 1024 }),
 ];
 

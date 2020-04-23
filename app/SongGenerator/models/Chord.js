@@ -527,7 +527,9 @@ class Chord {
       name: this.name({ format: 'name' }),
       abreviation: this.name(),
       scale,
-      root: this.get('key'),
+      root: chordIdxs[0],
+      key: this.get('key'),
+      romanNumeral: this.romanNumeral(),
       ...otherAttrs,
     };
   }
