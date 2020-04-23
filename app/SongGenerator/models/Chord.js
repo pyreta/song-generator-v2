@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import Scale from './Scale';
 // import Progression from './Progression';
 import chordProbabilities from './hookTheory/chordProbabilities';
@@ -35,6 +34,7 @@ const pianoRollIntervalKeyMap = {
   5: 'fifth',
   6: 'sixth',
   7: 'seventh',
+  9: 'ninth',
 };
 
 class Chord {
@@ -510,7 +510,7 @@ class Chord {
   }
 
   pianoRollData(otherAttrs = {}) {
-    const chordIdxs = this.noteValues();
+    const chordIdxs = this.noteValues().map(x => x % 12);
     const scale = this.getMode()
       .intervalsFromRoot()
       .reduce((acc, idx) => {

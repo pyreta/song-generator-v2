@@ -399,6 +399,7 @@ const PianoRoll = ({
         length: drawLength,
         velocity: drawVelocity,
       };
+      playSingleNote(data.noteNum);
       addNote(storage.noteBeforeChange);
     } else {
       deselectAll();
@@ -501,13 +502,13 @@ const PianoRoll = ({
   useEffect(() => {
     const onMouseUp = e => {
       const data = analyzeMousePosition(e);
-      setMouseIsDown(false);
-      if (storage.noteBeforeChange) return onNoteUp(data);
-      onGridUp(data);
       if (storage.ringingNote) {
         onPianoKeyUp(storage.ringingNote);
         storage.ringingNote = null;
       }
+      setMouseIsDown(false);
+      if (storage.noteBeforeChange) return onNoteUp(data);
+      onGridUp(data);
       return null;
     };
     document.addEventListener('mouseup', onMouseUp);
@@ -572,6 +573,9 @@ const PianoRoll = ({
         </select>
         <button type="button" onClick={() => console.log(notes)}>
           NOTES
+        </button>
+        <button type="button" onClick={() => onNotesChange({})}>
+          CLEAR
         </button>
       </Flex>
 

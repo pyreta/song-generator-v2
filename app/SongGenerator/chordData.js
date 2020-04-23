@@ -15,7 +15,7 @@ const data2 = new Chord({
   scale: 'major',
   mode: 2,
   chord: 4,
-  notes: { 1: 0, 3: 0, 5: 0, 7: 0, 9: 0 },
+  notes: { 1: 0, 3: 0, 5: 0, 9: 0 },
 }).pianoRollData({ length: 512 });
 
 const chordData = [
