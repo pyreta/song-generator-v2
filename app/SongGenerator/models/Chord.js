@@ -29,6 +29,14 @@ const defaultChord = {
   notes: { 1: 0, 3: 0, 5: 0 },
 };
 
+const pianoRollIntervalKeyMap = {
+  1: 'root',
+  3: 'third',
+  5: 'fifth',
+  6: 'sixth',
+  7: 'seventh',
+};
+
 class Chord {
   static newChordFromScale(chord, scale, progression) {
     return new Chord({ scale, chord }, progression);
@@ -499,6 +507,29 @@ class Chord {
 
   equals(otherChord) {
     return this.voicing().signature() === otherChord.voicing().signature();
+  }
+
+  pianoRollData(otherAttrs = {}) {
+    const chordIdxs = this.noteValues();
+    const scale = this.getMode()
+      .intervalsFromRoot()
+      .reduce((acc, idx) => {
+        acc[idx] = chordIdxs.includes(idx) ? 'chord' : 'scale';
+        return acc;
+      }, Array(12).fill(null));
+
+    const chordIntervals = Object.keys(this.get('notes')).sort();
+    chordIntervals.forEach((interval, i) => {
+      scale[chordIdxs[i] % 12] = pianoRollIntervalKeyMap[interval] || 'chord';
+    });
+
+    return {
+      name: this.name({ format: 'name' }),
+      abreviation: this.name(),
+      scale,
+      root: this.get('key'),
+      ...otherAttrs,
+    };
   }
 }
 

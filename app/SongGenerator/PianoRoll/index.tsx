@@ -236,6 +236,7 @@ const PianoRoll = ({
     columns,
     columnsPerQuarterNote,
     snapToGrid,
+    pianoWidth,
   ]);
 
   useEffect(() => {

@@ -22,7 +22,7 @@ class Mode {
 
   intervalsFromRoot({ octaves = 1 } = {}) {
     const ints = this.intervals();
-    let intervals = ints
+    const intervals = ints
       .reduce(
         (acc, interval) => {
           return [...acc, acc[acc.length - 1] + interval];

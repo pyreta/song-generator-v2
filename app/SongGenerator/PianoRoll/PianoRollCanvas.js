@@ -42,9 +42,9 @@ class PianoRollCanvas {
       octaves = 7,
       columns = 64,
       pianoWidth = 100,
-      barsHeight = 40,
+      barsHeight = 20,
       chordsHeight = 30,
-      velocityHeight = 160,
+      velocityHeight = 30,
       columnsPerQuarterNote = 1,
       scrollX = 0,
       scrollY = 0,
@@ -173,7 +173,7 @@ class PianoRollCanvas {
   }
 
   getRow(x, y) {
-    return Math.floor((y + this.scrollY) / this.cellheight);
+    return Math.floor((y + this.scrollY - this.headerHeight) / this.cellheight);
   }
 
   getNoteNumFromCoords(x, y) {
@@ -318,6 +318,8 @@ class PianoRollCanvas {
 
   drawHeadersAndFooters() {
     this.clear();
+    this.ctx.fillStyle = colors.scale;
+    this.ctx.fillRect(0, 0, this.pianoWidth, this.headerHeight);
     this.drawMeasuresHeader();
     this.drawChordHeader();
     this.drawVelocity();
@@ -325,21 +327,22 @@ class PianoRollCanvas {
 
   drawChordHeader() {
     this.ctx.fillStyle = colors.background;
-    this.ctx.strokeStyle = 'orange';
-    this.ctx.fillRect(0, 0, this.w, this.barsHeight);
-    this.ctx.strokeRect(0, 0, this.w, this.barsHeight);
+    this.ctx.fillRect(this.pianoWidth, 0, this.w, this.chordsHeight);
+  }
+
+  drawMeasuresHeader() {
+    this.ctx.fillStyle = colors.whiteKey;
+    this.ctx.fillRect(
+      this.pianoWidth,
+      this.chordsHeight,
+      this.w,
+      this.barsHeight,
+    );
   }
 
   drawVelocity() {
-    this.ctx.fillStyle = colors.blackKey;
-    this.ctx.strokeStyle = colors.whiteKey;
+    this.ctx.fillStyle = colors.scale;
     this.ctx.fillRect(
-      0,
-      this.canvas.height - this.velocityHeight,
-      this.pianoWidth,
-      this.canvas.height,
-    );
-    this.ctx.strokeRect(
       0,
       this.canvas.height - this.velocityHeight,
       this.pianoWidth,
@@ -359,13 +362,6 @@ class PianoRollCanvas {
       this.w,
       this.canvas.height,
     );
-  }
-
-  drawMeasuresHeader() {
-    this.ctx.fillStyle = colors.blackKey;
-    this.ctx.strokeStyle = colors.whiteKey;
-    this.ctx.fillRect(0, this.barsHeight, this.w, this.chordsHeight);
-    this.ctx.strokeRect(0, this.barsHeight, this.w, this.chordsHeight);
   }
 
   drawPiano() {
