@@ -289,18 +289,24 @@ class PianoRollCanvas {
         const y = row * this.cellheight + this.headerHeight;
         const x = startTick;
         this.ctx.beginPath();
+        const rowNote = this.getNoteNumFromRow(row);
         const modulod =
-          (this.getNoteNumFromRow(row) - (chord.root % chord.scale.length)) %
-          chord.scale.length;
+          (rowNote - (chord.root % chord.scale.length)) % chord.scale.length;
         if (chord.scale[modulod]) {
           this.ctx.fillStyle = colors[chord.scale[modulod]];
-          this.ctx.rect(
-            x - this.scrollX + this.pianoWidth,
-            y - this.scrollY,
-            chordPixelLength,
-            this.cellheight,
-          );
+          const rectX = x - this.scrollX + this.pianoWidth;
+          const rectY = y - this.scrollY;
+          this.ctx.rect(rectX, rectY, chordPixelLength, this.cellheight);
           this.ctx.fill();
+          if (rowNote % 12 === chord.root) {
+            this.ctx.fillStyle = colors.border1;
+            this.ctx.fillRect(
+              rectX,
+              rectY + this.cellheight - 2,
+              chordPixelLength,
+              1,
+            );
+          }
         }
       }
       startTick += chordPixelLength;
