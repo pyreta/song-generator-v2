@@ -192,13 +192,19 @@ class PianoRollCanvas {
 
   chordAt(x, y) {
     let chordIdx;
+    let chord;
     this.chords.forEach((c, i) => {
+      if (!c.coords) return;
       const { x1, x2 } = c.coords;
-      if (x >= x1 && x < x2) chordIdx = i;
+      if (x >= x1 && x < x2) {
+        chordIdx = i;
+        chord = c;
+      }
     });
 
     return {
       chordIdx,
+      chord,
       chordIsPresent: chordIdx !== undefined,
       onChordHeader: y < this.chordsHeight,
     };
@@ -217,8 +223,8 @@ class PianoRollCanvas {
   at(x, y) {
     const column = (x + this.scrollX - this.pianoWidth) / this.cellwidth;
     const piano = x <= this.pianoWidth;
-    const noteNum = piano ? null : this.getNoteNumFromCoords(x, y);
-    const noteAtLocation = this.noteAt(x, y);
+    const noteNum = this.getNoteNumFromCoords(x, y);
+    const noteAtLocation = piano ? null : this.noteAt(x, y);
     const location = Math.floor(column * 128) - 2;
     return {
       noteAtLocation,
@@ -357,6 +363,7 @@ class PianoRollCanvas {
       const chordX = idx === 0 ? rectX : rectX + 1;
       withCoords.push({
         ...chord,
+        index: idx,
         coords: { x1: chordX, x2: chordX + chordPixelLength },
       });
       this.ctx.fillRect(chordX, 0, chordPixelLength, this.chordsHeight);
@@ -398,7 +405,7 @@ class PianoRollCanvas {
   }
 
   drawMeasuresHeader() {
-    this.ctx.fillStyle = colors.blackKey;
+    this.ctx.fillStyle = colors.whiteKey;
     this.ctx.fillRect(
       this.pianoWidth,
       this.chordsHeight,

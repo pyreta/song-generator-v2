@@ -11,6 +11,7 @@ const storage = {
   noteBeforeChange: null,
   selectionsBeforeChange: null,
   noteDelta: null,
+  ringingChord: null,
 };
 
 const mergeNotes = (notesToMerge, notes) => {
@@ -444,6 +445,18 @@ const PianoRoll = ({
     /* console.log(data.noteNum)*/
   };
 
+  // ************************* Piano ************************* handlers
+  // ************************* Piano ************************* handlers
+  // ************************* Piano ************************* handlers
+  const onChordDown = data => {
+    if (!data.chordIsPresent) return;
+    storage.ringingChord = data.chord;
+    storage.ringingChord.noteValues.map(n => onPianoKeyDown(n));
+  };
+  const onChordDrag = data => {
+    console.log(`storage.ringingChord:`, storage.ringingChord)
+  };
+
   // ************************* GENERAL ************************* handlers
   // ************************* GENERAL ************************* handlers
   // ************************* GENERAL ************************* handlers
@@ -489,6 +502,7 @@ const PianoRoll = ({
     if (isRightClick(e)) return onRightClick(e);
     const data = analyzeMousePosition(e);
     setMouseIsDown(data);
+    if (data.onChordHeader) return onChordDown(data);
     if (data.piano) return onPianoDown(data);
     if (data.noteAtLocation) return onNoteDown(data);
     return onGridDown(data);
@@ -497,6 +511,7 @@ const PianoRoll = ({
   const onMouseMove = e => {
     const data = analyzeMousePosition(e);
     if (mouseIsDown) {
+      if (storage.ringingChord) return onChordDrag(data);
       if (data.piano) onPianoDown(data);
       if (storage.noteBeforeChange) return onNoteDrag(data);
       return onGridDrag(data);
@@ -512,6 +527,10 @@ const PianoRoll = ({
       if (storage.ringingNote) {
         onPianoKeyUp(storage.ringingNote);
         storage.ringingNote = null;
+      }
+      if (storage.ringingChord) {
+        storage.ringingChord.noteValues.map(n => onPianoKeyUp(n));
+        storage.ringingChord = null;
       }
       setMouseIsDown(false);
       if (storage.noteBeforeChange) return onNoteUp(data);

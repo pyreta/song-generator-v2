@@ -523,9 +523,12 @@ class Chord {
       scale[chordIdxs[i] % 12] = pianoRollIntervalKeyMap[interval] || 'chord';
     });
 
+    const noteValues = this.noteValues();
+
     return {
       name: this.name({ format: 'name' }),
       abreviation: this.name(),
+      noteValues: [noteValues[0] + 36, ...noteValues.map(x => x + 60)],
       scale,
       root: chordIdxs[0],
       key: this.get('key'),
