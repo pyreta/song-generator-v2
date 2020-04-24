@@ -7,6 +7,7 @@ import Transport from './Transport';
 import { trackData1, trackData2 } from './trackData';
 import chordData from './chordData';
 import { exportMidi, playMidi } from './helpers';
+import Chord from './models/Chord';
 
 const Wrapper = styled.div`
   max-height: 75vh;
@@ -58,7 +59,7 @@ const SongGenerator = props => {
           columns={128}
           columnsPerQuarterNote={1}
           notes={notes}
-          chords={chords}
+          chords={chords.map(c => Chord.wrap(c).pianoRollData())}
           onNotesChange={setNotes}
           onDeviceChange={setOutputId}
           onPianoKeyDown={note =>

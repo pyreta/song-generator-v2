@@ -1,16 +1,3 @@
-// const originalColors = {
-//   scale: '#faf0e6',
-//   chordNotes: '#ffdab9',
-//   root: '#FF7F50',
-//   third: '#ffa54f',
-//   fifth: '#87ceff',
-//   seventh: '#b5f6da',
-//   line: '#949494',
-// };
-
-// chord_color_dict = {'C':'steel blue', 'C#':'firebrick3', 'D':'DarkOrchid3', 'D#':'dark orange', 'E':'sea green', 'F':'thistle4',
-// 	'F#':'tomato', 'G':'blue2', 'G#':'light goldenrod', 'A':'yellow4', 'A#':'dark green', 'B':'brown4'}
-
 const colors = {
   root: 'rgb(54, 41, 49)',
   third: 'rgb(58, 51, 24)',
@@ -31,13 +18,14 @@ const colors = {
   chord: '#484842',
 };
 
-// const chordColors = Object.values(colors).slice(0, 12);
-
 const chordColors = [
+  'rgb(221, 40, 87)',
+  'rgb(255, 251, 133)',
+  'rgb(118, 141, 170)',
+  'rgb(51, 219, 207)',
+  'rgb(107, 176, 141)',
   'red',
-  'green',
   'rgb(15,168,209)',
-  'blue',
   'yellow',
   'red',
   'orange',
@@ -362,8 +350,8 @@ class PianoRollCanvas {
       const chordPixelLength = this.ticksToPixels(chord.length);
       const x = startTick;
       const rectX = x - this.scrollX + this.pianoWidth;
-      this.ctx.fillStyle = chordColors[chord.root];
       const chordX = idx === 0 ? rectX : rectX + 1;
+      this.ctx.fillStyle = chordColors[chord.root];
       withCoords.push({
         ...chord,
         index: idx,

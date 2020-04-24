@@ -130,7 +130,7 @@ const PianoRoll = ({
   const [scrollX, setScrollX] = useState(0);
   const [scrollY, setScrollY] = useState(800);
   const [pianoWidth, setPianoWidth] = useState(100);
-  const [zoomX, setZoomX] = useState(500);
+  const [zoomX, setZoomX] = useState(230);
   const [zoomY, setZoomY] = useState(150);
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [tool, setTool] = useState('edit');
@@ -454,7 +454,13 @@ const PianoRoll = ({
     storage.ringingChord.noteValues.map(n => onPianoKeyDown(n));
   };
   const onChordDrag = data => {
-    console.log(`storage.ringingChord:`, storage.ringingChord)
+    if (
+      data.onChordHeader &&
+      data.chordIsPresent &&
+      data.chord.name !== storage.ringingChord.name
+    ) {
+      console.log(`data.chord:`, data.chord);
+    }
   };
 
   // ************************* GENERAL ************************* handlers
@@ -541,6 +547,16 @@ const PianoRoll = ({
     return () => document.removeEventListener('mouseup', onMouseUp);
   });
 
+  useEffect(() => {
+    const onKeyDown = e => {
+      if (e.key === 'Backspace') {
+        onNotesChange(seperateSelected(notes).notSelected);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [notes]);
+
   return (
     <div>
       <div>
@@ -556,8 +572,8 @@ const PianoRoll = ({
       <div>
         <input
           type="range"
-          min={100}
-          max={1000}
+          min={60}
+          max={1100}
           onChange={changeZoomX}
           value={zoomX}
         />

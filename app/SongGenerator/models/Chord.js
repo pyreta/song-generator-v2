@@ -25,6 +25,7 @@ const defaultChord = {
   scale: 'major',
   mode: 1,
   chord: 1,
+  length: 512,
   notes: { 1: 0, 3: 0, 5: 0 },
 };
 
@@ -509,7 +510,7 @@ class Chord {
     return this.voicing().signature() === otherChord.voicing().signature();
   }
 
-  pianoRollData(otherAttrs = {}) {
+  pianoRollData() {
     const chordIdxs = this.noteValues().map(x => x % 12);
     const scale = this.getMode()
       .intervalsFromRoot()
@@ -533,7 +534,7 @@ class Chord {
       root: chordIdxs[0],
       key: this.get('key'),
       romanNumeral: this.romanNumeral(),
-      ...otherAttrs,
+      length: this.get('length'),
     };
   }
 }
