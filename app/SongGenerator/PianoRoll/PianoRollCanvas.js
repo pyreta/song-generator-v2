@@ -343,37 +343,43 @@ class PianoRollCanvas {
     });
   }
 
-  drawChordHeader() {
+  drawChord(chord, rectX, idx, draggingChordIndex) {
+    const chordPixelLength = this.ticksToPixels(chord.length);
+    this.ctx.fillStyle =
+      idx === draggingChordIndex ? colors.background : chordColors[chord.root];
+    this.ctx.fillRect(rectX, 0, chordPixelLength, this.chordsHeight);
+    this.ctx.fillStyle = colors.background;
+    this.ctx.strokeRect(rectX, 0, chordPixelLength, this.chordsHeight);
+    this.ctx.font = '18px Helvetica';
+    this.ctx.textAlign = 'center';
+    const chordName = `${chord.name} (${chord.romanNumeral})`;
+    const textWidth = this.ctx.measureText(chordName).width;
+    const name =
+      chordPixelLength < textWidth + 100 ? chord.abreviation : chordName;
+    this.ctx.fillText(
+      name,
+      rectX + chordPixelLength / 2,
+      this.chordsHeight / 2 + 5,
+    );
+    return {
+      ...chord,
+      index: idx,
+      coords: { x1: rectX, x2: rectX + chordPixelLength },
+    };
+  }
+
+  drawChordHeader({ draggingChordIndex, newX }) {
     let startTick = 0;
     const withCoords = [];
     this.chords.forEach((chord, idx) => {
-      const chordPixelLength = this.ticksToPixels(chord.length);
-      const x = startTick;
-      const rectX = x - this.scrollX + this.pianoWidth;
-      const chordX = idx === 0 ? rectX : rectX + 1;
-      this.ctx.fillStyle = chordColors[chord.root];
-      withCoords.push({
-        ...chord,
-        index: idx,
-        coords: { x1: chordX, x2: chordX + chordPixelLength },
-      });
-      this.ctx.fillRect(chordX, 0, chordPixelLength, this.chordsHeight);
-      this.ctx.fillStyle = colors.background;
-      this.ctx.fillRect(rectX + chordPixelLength - 1, 0, 2, this.chordsHeight);
-      this.ctx.fillStyle = colors.background;
-      this.ctx.font = '18px Helvetica';
-      this.ctx.textAlign = 'center';
-      const chordName = `${chord.name} (${chord.romanNumeral})`;
-      const textWidth = this.ctx.measureText(chordName).width;
-      const name =
-        chordPixelLength < textWidth + 100 ? chord.abreviation : chordName;
-      this.ctx.fillText(
-        name,
-        rectX + chordPixelLength / 2,
-        this.chordsHeight / 2 + 5,
-      );
-      startTick += chordPixelLength;
+      const rectX = startTick - this.scrollX + this.pianoWidth;
+      const drawnChord = this.drawChord(chord, rectX, idx, draggingChordIndex);
+      withCoords.push(drawnChord);
+      startTick += drawnChord.coords.x2 - drawnChord.coords.x1;
     });
+    if (newX) {
+      this.drawChord(withCoords[draggingChordIndex], newX, draggingChordIndex);
+    }
     this.chords = withCoords;
   }
 
@@ -386,10 +392,10 @@ class PianoRollCanvas {
     this.drawMeasuresGrid();
   }
 
-  drawHeadersAndFooters() {
+  drawHeadersAndFooters(opts = {}) {
     this.clear();
     this.drawMeasuresHeader();
-    this.drawChordHeader();
+    this.drawChordHeader(opts);
     this.drawVelocity();
     this.ctx.fillStyle = colors.scale;
     this.ctx.fillRect(0, 0, this.pianoWidth, this.headerHeight);

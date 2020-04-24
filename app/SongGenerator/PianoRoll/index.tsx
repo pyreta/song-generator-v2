@@ -445,19 +445,46 @@ const PianoRoll = ({
     /* console.log(data.noteNum)*/
   };
 
-  // ************************* Piano ************************* handlers
-  // ************************* Piano ************************* handlers
-  // ************************* Piano ************************* handlers
+  // ************************* Chord ************************* handlers
+  // ************************* Chord ************************* handlers
+  // ************************* Chord ************************* handlers
   const onChordDown = data => {
     if (!data.chordIsPresent) return;
     storage.ringingChord = data.chord;
     storage.ringingChord.noteValues.map(n => onPianoKeyDown(n));
   };
-  const onChordDrag = data => {
+
+  const onChordDrag = e => {
+    const { x, y } = getCoords(e); // eslint-disable-line
+    const leftOffset = mouseIsDown.x - storage.ringingChord.coords.x1;
+    const rightOffset = storage.ringingChord.coords.x2 - mouseIsDown.x;
+    chordClassRef.current.drawHeadersAndFooters({
+      draggingChordIndex: storage.ringingChord.index,
+      newX: x - leftOffset,
+    });
+    const dataL = getCanvasDetails(x - leftOffset, y); // eslint-disable-line
+    const dataR = getCanvasDetails(x + rightOffset, y); // eslint-disable-line
+    if (
+      dataL.chordIsPresent &&
+      dataL.chord.index !== storage.ringingChord.index
+    ) {
+      // console.log(`dataL.chord.abreviation:`, dataL.chord);
+    } else if (
+      dataR.chordIsPresent &&
+      dataR.chord.index !== storage.ringingChord.index
+    ) {
+      // console.log(`dataR.chord.abreviation:`, dataR.chord);
+    }
+    // const chordLivesOnTheRight =
+    //   dataL.chord.index < storage.ringingChord.index;
+  };
+
+  const onChordUp = data => {
+    chordClassRef.current.drawHeadersAndFooters();
     if (
       data.onChordHeader &&
       data.chordIsPresent &&
-      data.chord.name !== storage.ringingChord.name
+      data.chord.index !== storage.ringingChord.index
     ) {
       console.log(`data.chord:`, data.chord);
     }
@@ -466,13 +493,18 @@ const PianoRoll = ({
   // ************************* GENERAL ************************* handlers
   // ************************* GENERAL ************************* handlers
   // ************************* GENERAL ************************* handlers
-  const analyzeMousePosition = e => {
+  const getCoords = e => {
     const elem = noteRef.current;
     const rect = elem.getBoundingClientRect();
     const yOffset = rect.top;
     const xOffset = rect.left;
-    const x = e.clientX - xOffset;
-    const y = e.clientY - yOffset;
+    return {
+      x: e.clientX - xOffset,
+      y: e.clientY - yOffset,
+    };
+  };
+
+  const getCanvasDetails = (x, y) => {
     if (!noteClassRef.current) {
       noteClassRef.current = new PRC(noteRef.current, opts);
     }
@@ -483,6 +515,11 @@ const PianoRoll = ({
       ...noteClassRef.current.at(x, y),
       ...chordClassRef.current.chordAt(x, y),
     };
+  };
+
+  const analyzeMousePosition = e => {
+    const { x, y } = getCoords(e);
+    return getCanvasDetails(x, y);
   };
 
   const onWheel = e => {
@@ -515,9 +552,9 @@ const PianoRoll = ({
   };
 
   const onMouseMove = e => {
+    if (storage.ringingChord) return onChordDrag(e);
     const data = analyzeMousePosition(e);
     if (mouseIsDown) {
-      if (storage.ringingChord) return onChordDrag(data);
       if (data.piano) onPianoDown(data);
       if (storage.noteBeforeChange) return onNoteDrag(data);
       return onGridDrag(data);
@@ -535,6 +572,7 @@ const PianoRoll = ({
         storage.ringingNote = null;
       }
       if (storage.ringingChord) {
+        onChordUp(data);
         storage.ringingChord.noteValues.map(n => onPianoKeyUp(n));
         storage.ringingChord = null;
       }
