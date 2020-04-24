@@ -34,18 +34,18 @@ const colors = {
 // const chordColors = Object.values(colors).slice(0, 12);
 
 const chordColors = [
-  '#FE4365',
-  '#FC9D9A',
-  '#F9CDAD',
-  '#C8C8A9',
-  '#83AF9B',
-  '#A7226E',
-  '#EC2049',
-  '#F26B38',
-  '#F7DB4F',
-  '#2F9599',
-  '#FC913A',
-  '#FF4E50',
+  'red',
+  'green',
+  'rgb(15,168,209)',
+  'blue',
+  'yellow',
+  'red',
+  'orange',
+  'purple',
+  '#ffa54f',
+  '#FF7F50',
+  '#ffdab9',
+  '#b5f6da',
 ];
 
 function rectsIntersect(r1, r2) {
@@ -106,6 +106,7 @@ class PianoRollCanvas {
     this.canvasWidthMultiple = canvasWidthMultiple;
     this.canvasHeightMultiple = canvasHeightMultiple;
     this.noteCoords = null;
+    this.chordCoords = null;
     this.snapToGrid = snapToGrid;
     this.chords = chords;
   }
@@ -189,6 +190,20 @@ class PianoRollCanvas {
     return hoveredNote;
   }
 
+  chordAt(x, y) {
+    let chordIdx;
+    this.chords.forEach((c, i) => {
+      const { x1, x2 } = c.coords;
+      if (x >= x1 && x < x2) chordIdx = i;
+    });
+
+    return {
+      chordIdx,
+      chordIsPresent: chordIdx !== undefined,
+      onChordHeader: y < this.chordsHeight,
+    };
+  }
+
   getRow(x, y) {
     return Math.floor((y + this.scrollY - this.headerHeight) / this.cellheight);
   }
@@ -201,14 +216,15 @@ class PianoRollCanvas {
 
   at(x, y) {
     const column = (x + this.scrollX - this.pianoWidth) / this.cellwidth;
-    const noteNum = this.getNoteNumFromCoords(x, y);
-    const noteClickedOn = this.noteAt(x, y);
+    const piano = x <= this.pianoWidth;
+    const noteNum = piano ? null : this.getNoteNumFromCoords(x, y);
+    const noteAtLocation = this.noteAt(x, y);
     const location = Math.floor(column * 128) - 2;
     return {
-      noteClickedOn,
+      noteAtLocation,
       noteNum,
       location,
-      piano: x <= this.pianoWidth,
+      piano,
       x,
       y,
     };
@@ -332,45 +348,35 @@ class PianoRollCanvas {
 
   drawChordHeader() {
     let startTick = 0;
+    const withCoords = [];
     this.chords.forEach((chord, idx) => {
       const chordPixelLength = this.ticksToPixels(chord.length);
-      for (let row = 0; row < this.rows; row += 1) {
-        const x = startTick;
-        const rowNote = this.getNoteNumFromRow(row);
-        const modulod =
-          (rowNote - (chord.key % chord.scale.length)) % chord.scale.length;
-        if (chord.scale[modulod]) {
-          const rectX = x - this.scrollX + this.pianoWidth;
-          this.ctx.fillStyle = chordColors[chord.root];
-          this.ctx.fillRect(
-            idx === 0 ? rectX : rectX + 1,
-            0,
-            chordPixelLength,
-            this.chordsHeight,
-          );
-          this.ctx.fillStyle = colors.background;
-          this.ctx.fillRect(
-            rectX + chordPixelLength - 1,
-            0,
-            2,
-            this.chordsHeight,
-          );
-          this.ctx.fillStyle = colors.background;
-          this.ctx.font = '20px Helvetica';
-          this.ctx.textAlign = 'center';
-          const chordName = `${chord.name} (${chord.romanNumeral})`;
-          const textWidth = this.ctx.measureText(chordName).width;
-          const name =
-            chordPixelLength < textWidth + 100 ? chord.abreviation : chordName;
-          this.ctx.fillText(
-            name,
-            rectX + chordPixelLength / 2,
-            this.chordsHeight / 2 + 5,
-          );
-        }
-      }
+      const x = startTick;
+      const rectX = x - this.scrollX + this.pianoWidth;
+      this.ctx.fillStyle = chordColors[chord.root];
+      const chordX = idx === 0 ? rectX : rectX + 1;
+      withCoords.push({
+        ...chord,
+        coords: { x1: chordX, x2: chordX + chordPixelLength },
+      });
+      this.ctx.fillRect(chordX, 0, chordPixelLength, this.chordsHeight);
+      this.ctx.fillStyle = colors.background;
+      this.ctx.fillRect(rectX + chordPixelLength - 1, 0, 2, this.chordsHeight);
+      this.ctx.fillStyle = colors.background;
+      this.ctx.font = '18px Helvetica';
+      this.ctx.textAlign = 'center';
+      const chordName = `${chord.name} (${chord.romanNumeral})`;
+      const textWidth = this.ctx.measureText(chordName).width;
+      const name =
+        chordPixelLength < textWidth + 100 ? chord.abreviation : chordName;
+      this.ctx.fillText(
+        name,
+        rectX + chordPixelLength / 2,
+        this.chordsHeight / 2 + 5,
+      );
       startTick += chordPixelLength;
     });
+    this.chords = withCoords;
   }
 
   drawGrid() {

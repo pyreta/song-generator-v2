@@ -120,6 +120,7 @@ const PianoRoll = ({
   const pianoRef = useRef();
   const headerAndFooterRef = useRef();
   const noteClassRef = useRef();
+  const chordClassRef = useRef();
   const selectionRef = useRef();
 
   // ************************* State *************************
@@ -221,8 +222,8 @@ const PianoRoll = ({
 
   useEffect(() => {
     const canvas = headerAndFooterRef.current;
-    const pianoRoll = new PRC(canvas, opts);
-    pianoRoll.drawHeadersAndFooters();
+    chordClassRef.current = new PRC(canvas, opts);
+    chordClassRef.current.drawHeadersAndFooters();
   }, [
     scrollX,
     scrollY,
@@ -328,13 +329,13 @@ const PianoRoll = ({
   // ************************* Note ************************* handlers
   // ************************* Note ************************* handlers
   const onNoteDown = data => {
-    storage.noteBeforeChange = data.noteClickedOn;
+    storage.noteBeforeChange = data.noteAtLocation;
     if (storage.noteBeforeChange.isSelected) {
       storage.selectionsBeforeChange = seperateSelected(notes).selected;
     }
     if (tool === 'draw') {
-      const newLength = snap(data.location) - data.noteClickedOn.startTick;
-      deleteNote(data.noteClickedOn);
+      const newLength = snap(data.location) - data.noteAtLocation.startTick;
+      deleteNote(data.noteAtLocation);
       storage.noteDelta = {
         length:
           newLength < tickDivision
@@ -343,7 +344,7 @@ const PianoRoll = ({
       };
     } else {
       playSingleNote(data.noteNum);
-      if (!data.noteClickedOn.isSelected) deselectAll();
+      if (!data.noteAtLocation.isSelected) deselectAll();
     }
   };
 
@@ -385,7 +386,7 @@ const PianoRoll = ({
   };
 
   const onNoteHover = data => {
-    /* console.log(data.noteClickedOn)*/
+    /* console.log(data.noteAtLocation)*/
   };
 
   // ************************* Grid ************************* handlers
@@ -456,7 +457,13 @@ const PianoRoll = ({
     if (!noteClassRef.current) {
       noteClassRef.current = new PRC(noteRef.current, opts);
     }
-    return noteClassRef.current.at(x, y);
+    if (!chordClassRef.current) {
+      chordClassRef.current = new PRC(headerAndFooterRef.current, opts);
+    }
+    return {
+      ...noteClassRef.current.at(x, y),
+      ...chordClassRef.current.chordAt(x, y),
+    };
   };
 
   const onWheel = e => {
@@ -483,7 +490,7 @@ const PianoRoll = ({
     const data = analyzeMousePosition(e);
     setMouseIsDown(data);
     if (data.piano) return onPianoDown(data);
-    if (data.noteClickedOn) return onNoteDown(data);
+    if (data.noteAtLocation) return onNoteDown(data);
     return onGridDown(data);
   };
 
@@ -495,7 +502,7 @@ const PianoRoll = ({
       return onGridDrag(data);
     }
     if (data.piano) return onPianoHover(data);
-    if (data.noteClickedOn) return onNoteHover(data);
+    if (data.noteAtLocation) return onNoteHover(data);
     return onGridHover(data);
   };
 
