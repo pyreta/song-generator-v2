@@ -126,7 +126,10 @@ class PianoRollCanvas {
   getNoteCoords(location, noteNum, length) {
     const x1 = this.ticksToPixels(location) + this.pianoWidth - this.scrollX;
     const x2 = x1 + this.ticksToPixels(length);
-    const y1 = (this.topNote - noteNum) * this.cellheight - this.scrollY;
+    const y1 =
+      (this.topNote - noteNum) * this.cellheight -
+      this.scrollY +
+      this.headerHeight;
     const y2 = y1 + this.cellheight;
     return { x1, y1, x2, y2 };
   }
