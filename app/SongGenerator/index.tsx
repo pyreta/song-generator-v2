@@ -62,6 +62,7 @@ const SongGenerator = props => {
           chords={chords.map(c => Chord.wrap(c).pianoRollData())}
           onNotesChange={setNotes}
           onDeviceChange={setOutputId}
+          onChordReorder={newIndeces => setChords(newIndeces.map(i => chords[i]))}
           onPianoKeyDown={note =>
             outputDevice.playNote([note], 1, { velocity: 0.5 })
           }

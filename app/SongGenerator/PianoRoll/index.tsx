@@ -12,6 +12,7 @@ const storage = {
   selectionsBeforeChange: null,
   noteDelta: null,
   ringingChord: null,
+  newIndeces: null,
 };
 
 const mergeNotes = (notesToMerge, notes) => {
@@ -112,6 +113,7 @@ const PianoRoll = ({
   onPianoKeyDown,
   onPianoKeyUp,
   onNotesChange,
+  onChordReorder,
 }) => {
   // ************************* Refs *************************
   // ************************* Refs *************************
@@ -239,6 +241,7 @@ const PianoRoll = ({
     columnsPerQuarterNote,
     snapToGrid,
     pianoWidth,
+    chords,
   ]);
 
   useEffect(() => {
@@ -451,36 +454,41 @@ const PianoRoll = ({
   const onChordDown = data => {
     if (!data.chordIsPresent) return;
     storage.ringingChord = data.chord;
+    storage.ringingChord = data.chord;
     storage.ringingChord.noteValues.map(n => onPianoKeyDown(n));
   };
 
   const onChordDrag = e => {
     const { x, y } = getCoords(e); // eslint-disable-line
+    const draggingLeft = x < mouseIsDown.x;
     const leftOffset = mouseIsDown.x - storage.ringingChord.coords.x1;
     const rightOffset = storage.ringingChord.coords.x2 - mouseIsDown.x;
-    chordClassRef.current.drawHeadersAndFooters({
-      draggingChordIndex: storage.ringingChord.index,
-      newX: x - leftOffset,
+    const left = [];
+    const right = [];
+    mouseIsDown.drawnChords.forEach((chord, i) => {
+      if (i === storage.ringingChord.index) return;
+      const { coords: { x1, x2 } } = chord; // eslint-disable-line
+      const chordLength = x2 - x1;
+      const threshold = x1 + chordLength * (draggingLeft ? 0.3 : 0.7);
+      const conditionMet = draggingLeft
+        ? x - leftOffset < threshold
+        : x + rightOffset <= threshold;
+      if (conditionMet) {
+        right.push(i);
+      } else {
+        left.push(i);
+      }
     });
-    const dataL = getCanvasDetails(x - leftOffset, y); // eslint-disable-line
-    const dataR = getCanvasDetails(x + rightOffset, y); // eslint-disable-line
-    if (
-      dataL.chordIsPresent &&
-      dataL.chord.index !== storage.ringingChord.index
-    ) {
-      // console.log(`dataL.chord.abreviation:`, dataL.chord);
-    } else if (
-      dataR.chordIsPresent &&
-      dataR.chord.index !== storage.ringingChord.index
-    ) {
-      // console.log(`dataR.chord.abreviation:`, dataR.chord);
-    }
-    // const chordLivesOnTheRight =
-    //   dataL.chord.index < storage.ringingChord.index;
+    storage.newIndeces = [...left, storage.ringingChord.index, ...right];
+
+    chordClassRef.current.drawHeadersAndFooters({
+      draggingChordIndex: left.length,
+      newX: x - leftOffset,
+      reorderedChords: storage.newIndeces.map(i => chords[i]),
+    });
   };
 
   const onChordUp = data => {
-    chordClassRef.current.drawHeadersAndFooters();
     if (
       data.onChordHeader &&
       data.chordIsPresent &&
@@ -575,6 +583,10 @@ const PianoRoll = ({
         onChordUp(data);
         storage.ringingChord.noteValues.map(n => onPianoKeyUp(n));
         storage.ringingChord = null;
+      }
+      if (storage.newIndeces) {
+        onChordReorder(storage.newIndeces);
+        storage.newIndeces = null;
       }
       setMouseIsDown(false);
       if (storage.noteBeforeChange) return onNoteUp(data);
@@ -712,6 +724,7 @@ PianoRoll.propTypes = {
   onPianoKeyDown: PropTypes.func.isRequired,
   onPianoKeyUp: PropTypes.func.isRequired,
   onNotesChange: PropTypes.func.isRequired,
+  onChordReorder: PropTypes.func.isRequired,
 };
 
 export default PianoRoll;

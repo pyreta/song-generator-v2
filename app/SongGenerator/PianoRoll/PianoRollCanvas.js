@@ -196,6 +196,7 @@ class PianoRollCanvas {
     return {
       chordIdx,
       chord,
+      drawnChords: this.chords,
       chordIsPresent: chordIdx !== undefined,
       onChordHeader: y < this.chordsHeight,
     };
@@ -368,10 +369,10 @@ class PianoRollCanvas {
     };
   }
 
-  drawChordHeader({ draggingChordIndex, newX }) {
+  drawChordHeader({ draggingChordIndex, newX, reorderedChords }) {
     let startTick = 0;
     const withCoords = [];
-    this.chords.forEach((chord, idx) => {
+    (reorderedChords || this.chords).forEach((chord, idx) => {
       const rectX = startTick - this.scrollX + this.pianoWidth;
       const drawnChord = this.drawChord(chord, rectX, idx, draggingChordIndex);
       withCoords.push(drawnChord);
@@ -380,7 +381,7 @@ class PianoRollCanvas {
     if (newX) {
       this.drawChord(withCoords[draggingChordIndex], newX, draggingChordIndex);
     }
-    this.chords = withCoords;
+    if (!reorderedChords) this.chords = withCoords;
   }
 
   drawGrid() {
