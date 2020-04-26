@@ -22,7 +22,7 @@ const playMidiTrack = (trackObject, outputDevice, bpm) => {
         outputDevice.playNote([noteVal], 1, { velocity });
         setTimeout(() => {
           outputDevice.stopNote([noteVal], 1);
-        }, convertTicksToMs(note.length, bpm));
+        }, convertTicksToMs(note.length, bpm) - 5);
       }, start);
     });
   });

@@ -138,7 +138,7 @@ const PianoRoll = ({
   const [tool, setTool] = useState('edit');
   const [drawLength] = useState(128);
   const [drawVelocity] = useState(42);
-  const [timeSignature] = useState([4, 8]);
+  const [timeSignature] = useState([4, 16]);
   const [mouseIsDown, setMouseIsDown] = useState(false);
   const [selectionCoords, setSelectionCoords] = useState(null);
   const changeScrollX = e => setScrollX(parseInt(e.target.value, 10));
