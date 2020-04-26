@@ -488,13 +488,12 @@ const PianoRoll = ({
     });
   };
 
-  const onChordUp = data => {
-    if (
-      data.onChordHeader &&
-      data.chordIsPresent &&
-      data.chord.index !== storage.ringingChord.index
-    ) {
-      console.log(`data.chord:`, data.chord);
+  const onChordUp = () => {
+    storage.ringingChord.noteValues.map(n => onPianoKeyUp(n));
+    storage.ringingChord = null;
+    if (storage.newIndeces) {
+      onChordReorder(storage.newIndeces);
+      storage.newIndeces = null;
     }
   };
 
@@ -581,12 +580,6 @@ const PianoRoll = ({
       }
       if (storage.ringingChord) {
         onChordUp(data);
-        storage.ringingChord.noteValues.map(n => onPianoKeyUp(n));
-        storage.ringingChord = null;
-      }
-      if (storage.newIndeces) {
-        onChordReorder(storage.newIndeces);
-        storage.newIndeces = null;
       }
       setMouseIsDown(false);
       if (storage.noteBeforeChange) return onNoteUp(data);

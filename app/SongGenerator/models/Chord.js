@@ -352,13 +352,6 @@ class Chord {
     }
     return '';
   }
-  //
-  // romanNumeral() {
-  //   const numeral = romanNumerals[this.get('chord') - 1];
-  //   return this.chordDefinition().getRomanNumeral(
-  //     this.isMajor() ? numeral.toUpperCase() : numeral,
-  //   );
-  // }
 
   inversion() {
     const bassNote = this.voicing().noteNames()[0];
@@ -511,7 +504,7 @@ class Chord {
   }
 
   pianoRollData() {
-    const chordIdxs = this.noteValues().map(x => x % 12);
+    const chordIdxs = this.noteValues().map(x => (x - this.get('key')) % 12);
     const scale = this.getMode()
       .intervalsFromRoot()
       .reduce((acc, idx) => {
@@ -531,7 +524,7 @@ class Chord {
       abreviation: this.name(),
       noteValues: [noteValues[0] + 36, ...noteValues.map(x => x + 60)],
       scale,
-      root: chordIdxs[0],
+      root: this.noteValues()[0],
       key: this.get('key'),
       romanNumeral: this.romanNumeral(),
       length: this.get('length'),
