@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
+import WebMidi from 'webmidi';
 import { dissocPath, assocPath, flatten } from 'ramda';
 import PRC from './PianoRollCanvas';
 
@@ -110,8 +111,6 @@ const PianoRoll = ({
   outputOptions,
   outputId,
   onDeviceChange,
-  onPianoKeyDown,
-  onPianoKeyUp,
   onNotesChange,
   onChordReorder,
 }) => {
@@ -150,6 +149,7 @@ const PianoRoll = ({
   // ************************* Variables *************************
   // ************************* Variables *************************
   // ************************* Variables *************************
+  const outputDevice = WebMidi.outputs.filter(o => o.id === outputId)[0];
   const zoomXAmount = zoomX / 100;
   const zoomYAmount = zoomY / 100;
   const maxScrollWidth = width * canvasWidthMultiple * zoomXAmount - width;
@@ -300,6 +300,10 @@ const PianoRoll = ({
   // ************************* Helpers *************************
   // ************************* Helpers *************************
   // ************************* Helpers *************************
+
+  const onPianoKeyDown = note =>
+    outputDevice.playNote([note], 1, { velocity: 0.5 });
+  const onPianoKeyUp = note => outputDevice.stopNote([note], 1);
 
   const deleteNote = ({ startTick, noteNum }) => {
     const delPath = dissocPath(
@@ -714,8 +718,6 @@ PianoRoll.propTypes = {
   chords: PropTypes.array.isRequired, // eslint-disable-line
   outputId: PropTypes.string.isRequired,
   onDeviceChange: PropTypes.func.isRequired,
-  onPianoKeyDown: PropTypes.func.isRequired,
-  onPianoKeyUp: PropTypes.func.isRequired,
   onNotesChange: PropTypes.func.isRequired,
   onChordReorder: PropTypes.func.isRequired,
 };

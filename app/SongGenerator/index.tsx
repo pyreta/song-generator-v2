@@ -20,13 +20,10 @@ const SongGenerator = props => {
   const [bpm, setBpm] = useState(120);
   const [width, setWidth] = useState(2000);
   const [height, setHeight] = useState(400);
-  const [notes, setNotes] = useState(trackData1.ticks);
+  const [trackInPianoRoll, setTrackInPianoRoll] = useState('trackData1');
+  const [tracks, setTracks] = useState({ trackData1, trackData2 });
   const [chords, setChords] = useState(chordData);
-  const [outputId, setOutputId] = useState(trackData1.outputDevice);
   const sizeRef = useRef();
-  const tracks = [{ outputDevice: outputId, name: 'Willy', ticks: notes }];
-  const outputDevice = WebMidi.outputs.filter(o => o.id === outputId)[0];
-  // const tracks = [trackData1, trackData2];
 
   useEffect(() => {
     const handler = () => {
@@ -44,11 +41,23 @@ const SongGenerator = props => {
   return (
     <>
       <Transport
-        onPlay={() => playMidi(tracks, bpm)}
-        onExport={() => exportMidi(tracks)}
+        onPlay={() => playMidi(Object.values(tracks), bpm)}
+        onExport={() => exportMidi(Object.values(tracks))}
         setBpm={setBpm}
         bpm={bpm}
       />
+      <div>
+        {tracks[trackInPianoRoll].name}
+      </div>
+      <div>
+        {
+          Object.keys(tracks).map(t => (
+            <button key={t} onClick={() => setTrackInPianoRoll(t)} style={{ background: trackInPianoRoll === t ? 'red' : 'white'}}>
+              {tracks[t].name}
+            </button>
+          ))
+        }
+      </div>
       <Wrapper ref={sizeRef}>
         <PianoRoll
           width={width}
@@ -58,16 +67,28 @@ const SongGenerator = props => {
           octaves={7}
           columns={128}
           columnsPerQuarterNote={1}
-          notes={notes}
+          notes={tracks[trackInPianoRoll].ticks}
           chords={chords.map(c => Chord.wrap(c).pianoRollData())}
-          onNotesChange={setNotes}
-          onDeviceChange={setOutputId}
+          onNotesChange={ticks => {
+            setTracks({
+              ...tracks,
+              [trackInPianoRoll]: {
+                ...tracks[trackInPianoRoll],
+                ticks
+              }
+            })
+          }}
+          onDeviceChange={outputDevice => {
+            setTracks({
+              ...tracks,
+              [trackInPianoRoll]: {
+                ...tracks[trackInPianoRoll],
+                outputDevice
+              }
+            })
+          }}
           onChordReorder={newIndeces => setChords(newIndeces.map(i => chords[i]))}
-          onPianoKeyDown={note =>
-            outputDevice.playNote([note], 1, { velocity: 0.5 })
-          }
-          onPianoKeyUp={note => outputDevice.stopNote([note], 1)}
-          outputId={outputId}
+          outputId={tracks[trackInPianoRoll].outputDevice}
           outputOptions={WebMidi.outputs.map(o => ({ id: o.id, name: o.name }))}
         />
       </Wrapper>
