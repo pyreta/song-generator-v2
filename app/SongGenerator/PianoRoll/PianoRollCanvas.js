@@ -240,7 +240,7 @@ class PianoRollCanvas {
   at(x, y) {
     const column = (x + this.scrollX - this.pianoWidth) / this.cellwidth;
     const piano = x <= this.pianoWidth;
-    const velocity = y > this.velocityHeight;
+    const velocity = y > this.canvas.height - this.velocityHeight;
     const noteNum = this.getNoteNumFromCoords(x, y);
     const [noteAtLocation, velocitiesAtLocation] = this.noteAt(x, y);
     const location = Math.floor(column * 128) - 2;

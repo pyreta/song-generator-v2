@@ -321,14 +321,14 @@ const PianoRoll = ({
     onNotesChange(mergeNotes(note, notes));
   };
 
-  const playSingleNote = noteNum => {
+  const playSingleNote = (noteNum, velocity) => {
     if (noteNum === storage.ringingNote) return;
     console.log(`noteNum:`, noteNum);
     if (storage.ringingNote) {
       onPianoKeyUp(storage.ringingNote);
     }
     storage.ringingNote = noteNum;
-    onPianoKeyDown(noteNum);
+    onPianoKeyDown(noteNum, velocity);
   };
 
   const snap = tick => {
@@ -355,7 +355,7 @@ const PianoRoll = ({
             : newLength - storage.noteBeforeChange.length,
       };
     } else {
-      playSingleNote(data.noteNum);
+      playSingleNote(data.noteNum, storage.noteBeforeChange.velocity / 100);
       if (!data.noteAtLocation.isSelected) deselectAll();
     }
   };
@@ -372,7 +372,8 @@ const PianoRoll = ({
       deleteNote(storage.noteBeforeChange);
     }
 
-    if (tool === 'edit') playSingleNote(data.noteNum);
+    if (tool === 'edit')
+      playSingleNote(data.noteNum, storage.noteBeforeChange.velocity / 100);
     const { length, noteNum, startTick } = storage.noteBeforeChange;
     storage.noteDelta =
       tool === 'draw'
@@ -453,6 +454,7 @@ const PianoRoll = ({
   // ************************* Velocity ************************* handlers
   // ************************* Velocity ************************* handlers
   // ************************* Velocity ************************* handlers
+
   const onVelocityDrag = data => {
     const newNotesAll = data.velocitiesAtLocation.reduce(
       (acc, { path: [location, pitch], velocity, noteNum }) => {
@@ -594,6 +596,7 @@ const PianoRoll = ({
     setMouseIsDown(data);
     if (data.onChordHeader) return onChordDown(data);
     if (data.piano) return onPianoDown(data);
+    if (data.velocity) return onVelocityDrag(data);
     if (data.noteAtLocation) return onNoteDown(data);
     return onGridDown(data);
   };
