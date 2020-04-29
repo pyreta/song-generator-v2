@@ -46,17 +46,17 @@ const SongGenerator = props => {
         setBpm={setBpm}
         bpm={bpm}
       />
+      <div>{tracks[trackInPianoRoll].name}</div>
       <div>
-        {tracks[trackInPianoRoll].name}
-      </div>
-      <div>
-        {
-          Object.keys(tracks).map(t => (
-            <button key={t} onClick={() => setTrackInPianoRoll(t)} style={{ background: trackInPianoRoll === t ? 'red' : 'white'}}>
-              {tracks[t].name}
-            </button>
-          ))
-        }
+        {Object.keys(tracks).map(t => (
+          <button
+            key={t}
+            onClick={() => setTrackInPianoRoll(t)}
+            style={{ background: trackInPianoRoll === t ? 'red' : 'white' }}
+          >
+            {tracks[t].name}
+          </button>
+        ))}
       </div>
       <Wrapper ref={sizeRef}>
         <PianoRoll
@@ -74,20 +74,25 @@ const SongGenerator = props => {
               ...tracks,
               [trackInPianoRoll]: {
                 ...tracks[trackInPianoRoll],
-                ticks
-              }
-            })
+                ticks,
+              },
+            });
           }}
           onDeviceChange={outputDevice => {
             setTracks({
               ...tracks,
               [trackInPianoRoll]: {
                 ...tracks[trackInPianoRoll],
-                outputDevice
-              }
-            })
+                outputDevice,
+              },
+            });
           }}
-          onChordReorder={newIndeces => setChords(newIndeces.map(i => chords[i]))}
+          onChordReorder={newIndeces =>
+            setChords(newIndeces.map(i => chords[i]))
+          }
+          onChordResize={lengths =>
+            setChords(lengths.map((length, i) => ({ ...chords[i], length })))
+          }
           outputId={tracks[trackInPianoRoll].outputDevice}
           outputOptions={WebMidi.outputs.map(o => ({ id: o.id, name: o.name }))}
         />
