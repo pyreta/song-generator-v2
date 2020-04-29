@@ -15,6 +15,7 @@ const storage = {
   ringingChord: null,
   newIndeces: null,
   newLengths: null,
+  ringingNotes: [],
 };
 
 const mergeNotes = (notesToMerge, notes) => {
@@ -304,8 +305,8 @@ const PianoRoll = ({
   // ************************* Helpers *************************
   // ************************* Helpers *************************
 
-  const onPianoKeyDown = note =>
-    outputDevice.playNote([note], 1, { velocity: 0.5 });
+  const onPianoKeyDown = (note, velocity) =>
+    outputDevice.playNote([note], 1, { velocity: velocity || 0.5 });
   const onPianoKeyUp = note => outputDevice.stopNote([note], 1);
 
   const deleteNote = ({ startTick, noteNum }) => {
@@ -396,9 +397,7 @@ const PianoRoll = ({
     storage.selectionsBeforeChange = null;
   };
 
-  const onNoteHover = data => {
-    /* console.log(data.noteAtLocation)*/
-  };
+  const onNoteHover = () => {};
 
   // ************************* Grid ************************* handlers
   // ************************* Grid ************************* handlers
@@ -443,16 +442,37 @@ const PianoRoll = ({
     }
   };
 
-  const onGridHover = data => {
-    /* console.log(data.location)*/
-  };
+  const onGridHover = () => {};
 
   // ************************* Piano ************************* handlers
   // ************************* Piano ************************* handlers
   // ************************* Piano ************************* handlers
   const onPianoDown = data => playSingleNote(data.noteNum);
-  const onPianoHover = data => {
-    /* console.log(data.noteNum)*/
+  const onPianoHover = () => {};
+
+  // ************************* Velocity ************************* handlers
+  // ************************* Velocity ************************* handlers
+  // ************************* Velocity ************************* handlers
+  const onVelocityDrag = data => {
+    const newNotesAll = data.velocitiesAtLocation.reduce(
+      (acc, { path: [location, pitch], velocity, noteNum }) => {
+        storage.ringingNotes.push(noteNum);
+        onPianoKeyDown(noteNum, velocity / 100);
+        return {
+          ...acc,
+          [location]: {
+            ...acc[location],
+            [pitch]: {
+              ...acc[location][pitch],
+              velocity,
+            },
+          },
+        };
+      },
+      notes,
+    );
+
+    onNotesChange(newNotesAll);
   };
 
   // ************************* Chord ************************* handlers
@@ -581,9 +601,11 @@ const PianoRoll = ({
   const onMouseMove = e => {
     if (storage.ringingChord) return onChordDrag(e);
     const data = analyzeMousePosition(e);
+
     if (mouseIsDown) {
       if (data.piano) onPianoDown(data);
       if (storage.noteBeforeChange) return onNoteDrag(data);
+      if (data.velocity) return onVelocityDrag(data);
       return onGridDrag(data);
     }
     if (data.resize) {
@@ -599,6 +621,7 @@ const PianoRoll = ({
   useEffect(() => {
     const onMouseUp = e => {
       const data = analyzeMousePosition(e);
+      storage.ringingNotes.forEach(noteNum => onPianoKeyUp(noteNum));
       if (storage.ringingNote) {
         onPianoKeyUp(storage.ringingNote);
         storage.ringingNote = null;

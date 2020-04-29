@@ -38,6 +38,14 @@ const SongGenerator = props => {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
+  const updateNoteByPath = (path, data) => {
+    const note = {
+      ...tracks[trackInPianoRoll].ticks[path[0]][path[1]],
+      ...data,
+    };
+    console.log(`note:`, note)
+  };
+
   return (
     <>
       <Transport
@@ -67,6 +75,7 @@ const SongGenerator = props => {
           octaves={7}
           columns={128}
           columnsPerQuarterNote={1}
+          updateNoteByPath={updateNoteByPath}
           notes={tracks[trackInPianoRoll].ticks}
           chords={chords.map(c => Chord.wrap(c).pianoRollData())}
           onNotesChange={ticks => {

@@ -97,6 +97,7 @@ class PianoRollCanvas {
     this.chordCoords = null;
     this.snapToGrid = snapToGrid;
     this.chords = chords;
+    this.velocityHeighPercent = 0.96;
   }
 
   clear() {
@@ -166,17 +167,31 @@ class PianoRollCanvas {
   }
 
   noteAt(x, y) {
-    let hoveredNote;
+    if (x <= this.pianoWidth) return [null, []];
+    let noteAtLocation;
+    const velocitiesAtLocation = [];
     if (this.noteCoords) {
       this.noteCoords.forEach(coord => {
+        const [startTick, noteNum] = coord.path;
         if (
+          x >= coord.x &&
+          x < coord.x + 5 &&
+          y > this.canvas.height - this.velocityHeight
+        ) {
+          const clickHeight = this.canvas.height - y;
+          const vel =
+            (clickHeight / (this.velocityHeight * this.velocityHeighPercent)) *
+            100;
+          velocitiesAtLocation.push({ path: coord.path, velocity: vel, noteNum });
+        }
+        if (
+          y < this.canvas.height - this.velocityHeight &&
           x > coord.x &&
           x < coord.x + coord.width &&
           y > coord.y &&
           y < coord.y + coord.height
         ) {
-          const [startTick, noteNum] = coord.path;
-          hoveredNote = {
+          noteAtLocation = {
             ...this.notes[startTick][noteNum],
             startTick: parseInt(startTick, 10),
             noteNum: parseInt(noteNum, 10),
@@ -185,7 +200,7 @@ class PianoRollCanvas {
         }
       });
     }
-    return hoveredNote;
+    return [noteAtLocation, velocitiesAtLocation];
   }
 
   chordAt(x, y) {
@@ -225,14 +240,17 @@ class PianoRollCanvas {
   at(x, y) {
     const column = (x + this.scrollX - this.pianoWidth) / this.cellwidth;
     const piano = x <= this.pianoWidth;
+    const velocity = y > this.velocityHeight;
     const noteNum = this.getNoteNumFromCoords(x, y);
-    const noteAtLocation = piano ? null : this.noteAt(x, y);
+    const [noteAtLocation, velocitiesAtLocation] = this.noteAt(x, y);
     const location = Math.floor(column * 128) - 2;
     return {
       noteAtLocation,
+      velocitiesAtLocation,
       noteNum,
       location,
       piano,
+      velocity,
       x,
       y,
     };
@@ -273,11 +291,15 @@ class PianoRollCanvas {
     return coords;
   }
 
+  getVelocityHeight(velocity) {
+    return this.velocityHeight * this.velocityHeighPercent * (velocity / 100);
+  }
+
   drawNote(x, y, width, height, isSelected, velocity) {
     this.ctx.fillStyle = isSelected ? colors.noteSelected : colors.note;
     this.ctx.strokeStyle = isSelected ? colors.border1 : colors.border2;
     if (velocity) {
-      const volheight = this.velocityHeight * 0.96 * (velocity / 100);
+      const volheight = this.getVelocityHeight(velocity);
       this.ctx.fillRect(x, this.canvas.height - volheight, 3, volheight);
     } else {
       this.ctx.fillRect(x, y, width, height);
