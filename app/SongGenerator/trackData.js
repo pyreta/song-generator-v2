@@ -7,7 +7,7 @@ export const trackData1 = {
     256: {
       49: {
         length: 512,
-        velocity: 62, // 0 - 100
+        velocity: 100, // 0 - 100
       },
     },
     88: {

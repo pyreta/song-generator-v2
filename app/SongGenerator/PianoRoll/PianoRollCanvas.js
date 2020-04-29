@@ -50,7 +50,7 @@ class PianoRollCanvas {
       pianoWidth = 100,
       barsHeight = 20,
       chordsHeight = 40,
-      velocityHeight = 30,
+      velocityHeight = 100,
       columnsPerQuarterNote = 1,
       scrollX = 0,
       scrollY = 0,
@@ -69,12 +69,11 @@ class PianoRollCanvas {
     this.ctx = canvas.getContext('2d');
     this.canvas = canvas;
     this.headerHeight = barsHeight + chordsHeight;
-    this.footerHeight = velocityHeight;
     this.w = width * zoomXAmount * canvasWidthMultiple - pianoWidth;
     this.h =
       height * zoomYAmount * canvasHeightMultiple -
       this.headerHeight -
-      this.footerHeight;
+      velocityHeight;
     this.pianoWidth = pianoWidth;
     this.barsHeight = barsHeight;
     this.chordsHeight = chordsHeight;
@@ -253,7 +252,7 @@ class PianoRollCanvas {
     return this.rows - parseInt(noteNum, 10) + this.bottomNote - 1;
   }
 
-  drawNotesAtLocation(startTick, notes) {
+  drawNotesAtLocation(startTick, notes, velocity) {
     const coords = [];
     const x = this.ticksToPixels(startTick) - this.scrollX + this.pianoWidth;
     Object.keys(notes).forEach(noteNum => {
@@ -261,29 +260,43 @@ class PianoRollCanvas {
       const width = this.ticksToPixels(parseInt(notes[noteNum].length, 10));
       const y = this.cellheight * row - this.scrollY + this.headerHeight;
       const height = this.cellheight;
-      this.drawNote(x, y, width, height, notes[noteNum].isSelected);
+      this.drawNote(
+        x,
+        y,
+        width,
+        height,
+        notes[noteNum].isSelected,
+        velocity ? notes[noteNum].velocity : null,
+      );
       coords.push({ x, y, width, height, path: [startTick, noteNum] });
     });
     return coords;
   }
 
-  drawNote(x, y, width, height, isSelected) {
+  drawNote(x, y, width, height, isSelected, velocity) {
     this.ctx.fillStyle = isSelected ? colors.noteSelected : colors.note;
     this.ctx.strokeStyle = isSelected ? colors.border1 : colors.border2;
-    this.ctx.fillRect(x, y, width, height);
-    this.ctx.strokeRect(x, y, width, height);
+    if (velocity) {
+      const volheight = this.velocityHeight * 0.96 * (velocity / 100);
+      this.ctx.fillRect(x, this.canvas.height - volheight, 3, volheight);
+    } else {
+      this.ctx.fillRect(x, y, width, height);
+      this.ctx.strokeRect(x, y, width, height);
+    }
   }
 
-  drawNotes() {
-    this.clear();
+  drawNotes(velocity) {
+    if (!velocity) {
+      this.clear();
+    }
     const noteCoords = Object.keys(this.notes).reduce((acc, startTick) => {
       return [
         ...acc,
-        ...this.drawNotesAtLocation(startTick, this.notes[startTick]),
+        ...this.drawNotesAtLocation(startTick, this.notes[startTick], velocity),
       ];
     }, []);
-    this.noteCoords = noteCoords;
-    return this.noteCoords;
+    if (!velocity) this.noteCoords = noteCoords;
+    return noteCoords;
   }
 
   getLinesPerColumn() {
@@ -472,6 +485,7 @@ class PianoRollCanvas {
       this.w,
       this.canvas.height,
     );
+    this.drawNotes(true);
   }
 
   drawPiano() {
