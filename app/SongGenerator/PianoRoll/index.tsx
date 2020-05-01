@@ -95,8 +95,6 @@ const YScroll = styled.input`
 
 /*
 TODO:
-volume
-grid highlighting by chord
 zoom behavior (stablized view and bugs)
 */
 
@@ -204,8 +202,10 @@ const PianoRoll = ({
   // ************************* Effects *************************
   useEffect(() => {
     document.body.style.cursor = cursor || 'default';
-    // document.body.style.cursor = tool === 'edit' ? 'crosshair' : 'default';
   }, [cursor]);
+  useEffect(() => {
+    document.body.style.cursor = tool === 'edit' ? 'crosshair' : 'default';
+  }, [tool]);
 
   useEffect(() => {
     const canvas = pianoRef.current;
@@ -345,7 +345,7 @@ const PianoRoll = ({
     if (storage.noteBeforeChange.isSelected) {
       storage.selectionsBeforeChange = seperateSelected(notes).selected;
     }
-    if (tool === 'draw') {
+    if (tool === 'draw' || data.noteAtLocation.resize) {
       const newLength = snap(data.location) - data.noteAtLocation.startTick;
       deleteNote(data.noteAtLocation);
       storage.noteDelta = {
@@ -361,6 +361,7 @@ const PianoRoll = ({
   };
 
   const onNoteDrag = data => {
+    const mouseMove = Math.abs(mouseIsDown.x - data.x);
     const newStartTick = snap(
       data.location - storage.noteBeforeChange.xOffsetTicks,
     );
@@ -375,18 +376,18 @@ const PianoRoll = ({
     if (tool === 'edit')
       playSingleNote(data.noteNum, storage.noteBeforeChange.velocity / 100);
     const { length, noteNum, startTick } = storage.noteBeforeChange;
-    storage.noteDelta =
-      tool === 'draw'
-        ? {
-            length:
-              newLength < tickDivision
-                ? tickDivision - length
-                : newLength - length,
-          }
-        : {
-            noteNum: data.noteNum - noteNum,
-            startTick: newStartTick < 0 ? -startTick : newStartTick - startTick,
-          };
+    if (tool === 'draw' || storage.noteBeforeChange.resize) {
+      const nooLen =
+        newLength < tickDivision ? tickDivision - length : newLength - length;
+      storage.noteDelta = {
+        length: mouseMove < 7 ? 0 : nooLen,
+      };
+    } else {
+      storage.noteDelta = {
+        noteNum: data.noteNum - noteNum,
+        startTick: newStartTick < 0 ? -startTick : newStartTick - startTick,
+      };
+    }
   };
 
   const onNoteUp = () => {
@@ -398,7 +399,13 @@ const PianoRoll = ({
     storage.selectionsBeforeChange = null;
   };
 
-  const onNoteHover = () => {};
+  const onNoteHover = data => {
+    if (data.noteAtLocation.resize) {
+      setCursor('ew-resize');
+    } else {
+      setCursor('default');
+    }
+  };
 
   // ************************* Grid ************************* handlers
   // ************************* Grid ************************* handlers
@@ -443,7 +450,13 @@ const PianoRoll = ({
     }
   };
 
-  const onGridHover = () => {};
+  const onGridHover = () => {
+    if (tool === 'draw') {
+      setCursor('default');
+    } else {
+      setCursor('crosshair');
+    }
+  };
 
   // ************************* Piano ************************* handlers
   // ************************* Piano ************************* handlers
@@ -611,11 +624,7 @@ const PianoRoll = ({
       if (data.velocity) return onVelocityDrag(data);
       return onGridDrag(data);
     }
-    if (data.resize) {
-      setCursor('ew-resize');
-    } else {
-      setCursor('default');
-    }
+
     if (data.piano) return onPianoHover(data);
     if (data.noteAtLocation) return onNoteHover(data);
     return onGridHover(data);

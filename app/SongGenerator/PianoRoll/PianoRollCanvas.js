@@ -182,7 +182,11 @@ class PianoRollCanvas {
           const vel =
             (clickHeight / (this.velocityHeight * this.velocityHeighPercent)) *
             100;
-          velocitiesAtLocation.push({ path: coord.path, velocity: vel, noteNum });
+          velocitiesAtLocation.push({
+            path: coord.path,
+            velocity: vel,
+            noteNum,
+          });
         }
         if (
           y < this.canvas.height - this.velocityHeight &&
@@ -196,6 +200,7 @@ class PianoRollCanvas {
             startTick: parseInt(startTick, 10),
             noteNum: parseInt(noteNum, 10),
             xOffsetTicks: this.pixelsToTicks(x - coord.x),
+            resize: x > coord.x + coord.width - 7,
           };
         }
       });
@@ -213,7 +218,7 @@ class PianoRollCanvas {
       if (x >= x1 && x < x2) {
         chordIdx = i;
         chord = c;
-        resize = x > x2 - 10;
+        resize = x > x2 - 10 && y < this.chordsHeight;
       }
     });
 
