@@ -16,6 +16,8 @@ const storage = {
   newIndeces: null,
   newLengths: null,
   ringingNotes: [],
+  scrollXPercent: 0,
+  scrollYPercent: 0,
 };
 
 const mergeNotes = (notesToMerge, notes) => {
@@ -142,6 +144,21 @@ const PianoRoll = ({
   const [timeSignature] = useState([4, 16]);
   const [mouseIsDown, setMouseIsDown] = useState(false);
   const [selectionCoords, setSelectionCoords] = useState(null);
+  const zoomXAmount = zoomX / 100;
+  const zoomYAmount = zoomY / 100;
+  const maxScrollWidth = width * canvasWidthMultiple * zoomXAmount - width;
+  const maxScrollHeight = height * canvasHeightMultiple * zoomYAmount - height;
+
+  useEffect(() => {
+    storage.scrollXPercent = scrollX / maxScrollWidth;
+    storage.scrollYPercent = scrollY / maxScrollHeight;
+  }, [scrollX, scrollY, height, width]);
+
+  useEffect(() => {
+    setScrollX(maxScrollWidth * storage.scrollXPercent);
+    setScrollY(maxScrollHeight * storage.scrollYPercent);
+  }, [zoomX, zoomY]);
+
   const changeScrollX = e => setScrollX(parseInt(e.target.value, 10));
   const changeScrollY = e => setScrollY(parseInt(e.target.value, 10));
   const changeZoomX = e => setZoomX(parseInt(e.target.value, 10));
@@ -152,10 +169,6 @@ const PianoRoll = ({
   // ************************* Variables *************************
   // ************************* Variables *************************
   const outputDevice = WebMidi.outputs.filter(o => o.id === outputId)[0];
-  const zoomXAmount = zoomX / 100;
-  const zoomYAmount = zoomY / 100;
-  const maxScrollWidth = width * canvasWidthMultiple * zoomXAmount - width;
-  const maxScrollHeight = height * canvasHeightMultiple * zoomYAmount - height;
   const tickDivision = (4 / timeSignature[1]) * 128;
   const selDelta = mergeSelectionsWithDelta(
     storage.selectionsBeforeChange,
@@ -500,6 +513,14 @@ const PianoRoll = ({
     storage.ringingChord.noteValues.map(n => onPianoKeyDown(n));
   };
 
+  const onChordHover = data => {
+    if (data.resize) {
+      setCursor('ew-resize');
+    } else {
+      setCursor('default');
+    }
+  };
+
   const onChordDrag = e => {
     const { x, y } = getCoords(e); // eslint-disable-line
     const draggingLeft = x < mouseIsDown.x;
@@ -626,6 +647,7 @@ const PianoRoll = ({
     }
 
     if (data.piano) return onPianoHover(data);
+    if (data.onChordHeader && data.chordIsPresent) return onChordHover(data);
     if (data.noteAtLocation) return onNoteHover(data);
     return onGridHover(data);
   };

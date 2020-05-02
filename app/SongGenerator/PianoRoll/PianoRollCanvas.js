@@ -491,13 +491,6 @@ class PianoRollCanvas {
   }
 
   drawVelocity() {
-    this.ctx.fillStyle = colors.scale;
-    this.ctx.fillRect(
-      0,
-      this.canvas.height - this.velocityHeight,
-      this.pianoWidth,
-      this.canvas.height,
-    );
     this.ctx.fillStyle = colors.whiteKey;
     this.ctx.strokeStyle = colors.blackKey;
     this.ctx.fillRect(
@@ -513,6 +506,13 @@ class PianoRollCanvas {
       this.canvas.height,
     );
     this.drawNotes(true);
+    this.ctx.fillStyle = colors.scale;
+    this.ctx.fillRect(
+      0,
+      this.canvas.height - this.velocityHeight,
+      this.pianoWidth,
+      this.canvas.height,
+    );
   }
 
   drawPiano() {
