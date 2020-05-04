@@ -73,7 +73,7 @@ const SongGenerator = props => {
           canvasWidthMultiple={2}
           canvasHeightMultiple={2}
           octaves={7}
-          columns={128}
+          columns={64}
           columnsPerQuarterNote={1}
           updateNoteByPath={updateNoteByPath}
           notes={tracks[trackInPianoRoll].ticks}

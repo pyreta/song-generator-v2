@@ -101,7 +101,7 @@ class PianoRollCanvas {
   }
 
   clear() {
-    this.ctx.clearRect(0, 0, this.w, this.h);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   drawSelection({ x1, y1, x2, y2 }) {
@@ -245,6 +245,7 @@ class PianoRollCanvas {
   at(x, y) {
     const column = (x + this.scrollX - this.pianoWidth) / this.cellwidth;
     const piano = x <= this.pianoWidth;
+    const onMeasuresHeader = y >= this.barsHeight && y < this.headerHeight;
     const velocity = y > this.canvas.height - this.velocityHeight;
     const noteNum = this.getNoteNumFromCoords(x, y);
     const [noteAtLocation, velocitiesAtLocation] = this.noteAt(x, y);
@@ -255,6 +256,7 @@ class PianoRollCanvas {
       noteNum,
       location,
       piano,
+      onMeasuresHeader,
       velocity,
       x,
       y,
@@ -462,7 +464,7 @@ class PianoRollCanvas {
   drawGrid() {
     this.clear();
     this.ctx.fillStyle = colors.background;
-    this.ctx.rect(0, 0, this.w, this.h);
+    this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fill();
     this.drawChordGrid();
     this.drawMeasuresGrid();
@@ -471,7 +473,7 @@ class PianoRollCanvas {
   drawHeadersAndFooters(opts = {}) {
     this.clear();
     this.ctx.fillStyle = colors.background;
-    this.ctx.fillRect(0, 0, this.w, this.headerHeight);
+    this.ctx.fillRect(0, 0, this.canvas.width, this.headerHeight);
     this.drawMeasuresHeader();
     const drawnChords = this.drawChordHeader(opts);
     this.drawVelocity();
@@ -544,14 +546,12 @@ class PianoRollCanvas {
   }
 
   drawPlayHead(startTick) {
-    const x = this.ticksToPixels(startTick);
-    this.resizeCanvasToDisplaySize();
+    this.clear();
+    const x = this.ticksToPixels(startTick) + this.pianoWidth - this.scrollX;
     this.ctx.beginPath();
-    this.ctx.moveTo(x, 0);
-    this.ctx.lineWidth = 1;
-    this.ctx.strokeStyle = colors.playHead;
-    this.ctx.lineTo(x, this.h);
-    this.ctx.shadowBlur = 0;
+    this.ctx.strokeStyle = colors.border1;
+    this.ctx.moveTo(x, this.chordsHeight);
+    this.ctx.lineTo(x, this.canvas.height - this.velocityHeight);
     this.ctx.stroke();
   }
 }

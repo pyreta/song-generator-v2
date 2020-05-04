@@ -20,6 +20,9 @@ const storage = {
   scrollYPercent: 0,
 };
 
+const zoomXMin = 50;
+const zoomXMax = 1100;
+
 const mergeNotes = (notesToMerge, notes) => {
   if (!notesToMerge) return notes;
   return flatten([notesToMerge]).reduce((acc, noteToMerge) => {
@@ -127,10 +130,12 @@ const PianoRoll = ({
   const noteClassRef = useRef();
   const chordClassRef = useRef();
   const selectionRef = useRef();
+  const playheadRef = useRef();
 
   // ************************* State *************************
   // ************************* State *************************
   // ************************* State *************************
+  const [playheadLocation, setPlayheadLocation] = useState(0);
   const [scrollX, setScrollX] = useState(0);
   const [scrollY, setScrollY] = useState(800);
   const [pianoWidth, setPianoWidth] = useState(100);
@@ -143,6 +148,7 @@ const PianoRoll = ({
   const [drawVelocity] = useState(42);
   const [timeSignature] = useState([4, 16]);
   const [mouseIsDown, setMouseIsDown] = useState(false);
+  const [zoomToPlayhead] = useState(true);
   const [selectionCoords, setSelectionCoords] = useState(null);
   const zoomXAmount = zoomX / 100;
   const zoomYAmount = zoomY / 100;
@@ -150,9 +156,23 @@ const PianoRoll = ({
   const maxScrollHeight = height * canvasHeightMultiple * zoomYAmount - height;
 
   useEffect(() => {
-    storage.scrollXPercent = scrollX / maxScrollWidth;
-    storage.scrollYPercent = scrollY / maxScrollHeight;
-  }, [scrollX, scrollY, height, width]);
+    if (zoomToPlayhead) {
+      const perc = playheadLocation / (columns * 128 * columnsPerQuarterNote);
+      storage.scrollXPercent = perc;
+    } else {
+      const perc = scrollY / maxScrollHeight;
+      storage.scrollXPercent = perc;
+    }
+  }, [
+    scrollX,
+    scrollY,
+    height,
+    width,
+    playheadLocation,
+    columns,
+    columnsPerQuarterNote,
+    zoomToPlayhead,
+  ]);
 
   useEffect(() => {
     setScrollX(maxScrollWidth * storage.scrollXPercent);
@@ -280,6 +300,26 @@ const PianoRoll = ({
     columnsPerQuarterNote,
     snapToGrid,
     chords,
+  ]);
+
+  useEffect(() => {
+    const canvas = playheadRef.current;
+    const pianoRoll = new PRC(canvas, opts);
+    pianoRoll.drawPlayHead(playheadLocation);
+  }, [
+    scrollX,
+    scrollY,
+    zoomXAmount,
+    zoomYAmount,
+    width,
+    height,
+    canvasWidthMultiple,
+    canvasHeightMultiple,
+    columns,
+    pianoWidth,
+    columnsPerQuarterNote,
+    snapToGrid,
+    playheadLocation,
   ]);
 
   useEffect(() => {
@@ -503,6 +543,27 @@ const PianoRoll = ({
     onNotesChange(newNotesAll);
   };
 
+  // ************************* Measures (Bars) ************************* handlers
+  // ************************* Measures (Bars) ************************* handlers
+  // ************************* Measures (Bars) ************************* handlers
+
+  const onMeasuresDown = data => {
+    setPlayheadLocation(snap(data.location));
+  };
+
+  const onMeasuresDrag = data => {
+    setPlayheadLocation(snap(data.location < 0 ? 0 : data.location));
+    const yDelta = data.y - mouseIsDown.y;
+    let newZoom = mouseIsDown.zoomX + yDelta;
+    if (newZoom < zoomXMin) newZoom = zoomXMin;
+    if (newZoom > zoomXMax) newZoom = zoomXMax;
+    setZoomX(newZoom);
+  };
+
+  const onMeasuresHover = () => {
+    setCursor('default');
+  };
+
   // ************************* Chord ************************* handlers
   // ************************* Chord ************************* handlers
   // ************************* Chord ************************* handlers
@@ -627,30 +688,40 @@ const PianoRoll = ({
   const onMouseDown = e => {
     if (isRightClick(e)) return onRightClick(e);
     const data = analyzeMousePosition(e);
-    setMouseIsDown(data);
+    setMouseIsDown({
+      ...data,
+      zoomX,
+    });
     if (data.onChordHeader) return onChordDown(data);
+    if (data.onMeasuresHeader) return onMeasuresDown(data);
     if (data.piano) return onPianoDown(data);
     if (data.velocity) return onVelocityDrag(data);
     if (data.noteAtLocation) return onNoteDown(data);
     return onGridDown(data);
   };
 
-  const onMouseMove = e => {
-    if (storage.ringingChord) return onChordDrag(e);
-    const data = analyzeMousePosition(e);
+  useEffect(() => {
+    const onMouseMove = e => {
+      if (storage.ringingChord) return onChordDrag(e);
+      const data = analyzeMousePosition(e);
 
-    if (mouseIsDown) {
-      if (data.piano) onPianoDown(data);
-      if (storage.noteBeforeChange) return onNoteDrag(data);
-      if (data.velocity) return onVelocityDrag(data);
-      return onGridDrag(data);
-    }
+      if (mouseIsDown) {
+        if (data.piano) onPianoDown(data);
+        if (mouseIsDown.onMeasuresHeader) return onMeasuresDrag(data);
+        if (storage.noteBeforeChange) return onNoteDrag(data);
+        if (data.velocity) return onVelocityDrag(data);
+        return onGridDrag(data);
+      }
 
-    if (data.piano) return onPianoHover(data);
-    if (data.onChordHeader && data.chordIsPresent) return onChordHover(data);
-    if (data.noteAtLocation) return onNoteHover(data);
-    return onGridHover(data);
-  };
+      if (data.piano) return onPianoHover(data);
+      if (data.onMeasuresHeader) return onMeasuresHover(data);
+      if (data.onChordHeader && data.chordIsPresent) return onChordHover(data);
+      if (data.noteAtLocation) return onNoteHover(data);
+      return onGridHover(data);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    return () => document.removeEventListener('mousemove', onMouseMove);
+  });
 
   useEffect(() => {
     const onMouseUp = e => {
@@ -697,8 +768,8 @@ const PianoRoll = ({
       <div>
         <input
           type="range"
-          min={60}
-          max={1100}
+          min={zoomXMin}
+          max={zoomXMax}
           onChange={changeZoomX}
           value={zoomX}
         />
@@ -749,6 +820,7 @@ const PianoRoll = ({
       <Wrapper onWheel={onWheel} style={{ width, height }}>
         <Canvas ref={gridRef} width={width} height={height} />
         <Canvas ref={noteRef} width={width} height={height} />
+        <Canvas ref={playheadRef} width={width} height={height} />
         <Canvas ref={selectionRef} width={width} height={height} />
         <Canvas ref={pianoRef} width={width} height={height} />
         <Canvas
@@ -756,7 +828,6 @@ const PianoRoll = ({
           width={width}
           height={height}
           onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
         />
         <div>
           <YScroll
