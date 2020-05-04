@@ -137,10 +137,10 @@ const PianoRoll = ({
   // ************************* State *************************
   const [playheadLocation, setPlayheadLocation] = useState(0);
   const [scrollX, setScrollX] = useState(0);
-  const [scrollY, setScrollY] = useState(800);
+  const [scrollY, setScrollY] = useState(400);
   const [pianoWidth, setPianoWidth] = useState(100);
-  const [zoomX, setZoomX] = useState(230);
-  const [zoomY, setZoomY] = useState(150);
+  const [zoomX, setZoomX] = useState(110);
+  const [zoomY, setZoomY] = useState(100);
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [tool, setTool] = useState('edit');
   const [cursor, setCursor] = useState('default');
@@ -157,16 +157,13 @@ const PianoRoll = ({
 
   useEffect(() => {
     if (zoomToPlayhead) {
-      const perc = playheadLocation / (columns * 128 * columnsPerQuarterNote);
-      storage.scrollXPercent = perc;
+      storage.scrollXPercent =
+        playheadLocation / (columns * 128 * columnsPerQuarterNote);
     } else {
-      const perc = scrollY / maxScrollHeight;
-      storage.scrollXPercent = perc;
+      storage.scrollXPercent = scrollX / maxScrollWidth;
     }
   }, [
     scrollX,
-    scrollY,
-    height,
     width,
     playheadLocation,
     columns,
@@ -175,9 +172,16 @@ const PianoRoll = ({
   ]);
 
   useEffect(() => {
-    setScrollX(maxScrollWidth * storage.scrollXPercent);
+    if (maxScrollHeight > 0) storage.scrollYPercent = scrollY / maxScrollHeight;
+  }, [scrollY, height]);
+
+  useEffect(() => {
     setScrollY(maxScrollHeight * storage.scrollYPercent);
-  }, [zoomX, zoomY]);
+  }, [zoomY, maxScrollHeight]);
+
+  useEffect(() => {
+    setScrollX(maxScrollWidth * storage.scrollXPercent);
+  }, [zoomX]);
 
   const changeScrollX = e => setScrollX(parseInt(e.target.value, 10));
   const changeScrollY = e => setScrollY(parseInt(e.target.value, 10));
@@ -555,7 +559,8 @@ const PianoRoll = ({
     setPlayheadLocation(snap(data.location < 0 ? 0 : data.location));
     const yDelta = data.y - mouseIsDown.y;
     let newZoom = mouseIsDown.zoomX + yDelta;
-    if (newZoom < zoomXMin) newZoom = zoomXMin;
+    if (newZoom < 100 / canvasWidthMultiple)
+      newZoom = 100 / canvasWidthMultiple;
     if (newZoom > zoomXMax) newZoom = zoomXMax;
     setZoomX(newZoom);
   };
@@ -768,7 +773,7 @@ const PianoRoll = ({
       <div>
         <input
           type="range"
-          min={zoomXMin}
+          min={100 / canvasWidthMultiple}
           max={zoomXMax}
           onChange={changeZoomX}
           value={zoomX}
@@ -778,7 +783,7 @@ const PianoRoll = ({
       <div>
         <input
           type="range"
-          min={100}
+          min={100 / canvasHeightMultiple}
           max={500}
           onChange={changeZoomY}
           value={zoomY}
