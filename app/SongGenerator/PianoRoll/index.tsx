@@ -20,7 +20,6 @@ const storage = {
   scrollYPercent: 0,
 };
 
-const zoomXMin = 50;
 const zoomXMax = 1100;
 
 const mergeNotes = (notesToMerge, notes) => {
@@ -588,41 +587,45 @@ const PianoRoll = ({
   };
 
   const onChordDrag = e => {
-    const { x, y } = getCoords(e); // eslint-disable-line
-    const draggingLeft = x < mouseIsDown.x;
-    const leftOffset = mouseIsDown.x - storage.ringingChord.coords.x1;
-    const rightOffset = storage.ringingChord.coords.x2 - mouseIsDown.x;
-    const left = [];
-    const right = [];
-    mouseIsDown.drawnChords.forEach((chord, i) => {
-      if (i === storage.ringingChord.index) return;
-      const {
-        coords: { x1, x2 },
-      } = chord; // eslint-disable-line
-      const chordLength = x2 - x1;
-      const threshold = x1 + chordLength * (draggingLeft ? 0.3 : 0.7);
-      const conditionMet = draggingLeft
-        ? x - leftOffset < threshold
-        : x + rightOffset <= threshold;
-      if (conditionMet) {
-        right.push(i);
-      } else {
-        left.push(i);
-      }
-    });
-    storage.newIndeces = [...left, storage.ringingChord.index, ...right];
+    if (mouseIsDown && mouseIsDown.drawnChords) {
+      const { x, y } = getCoords(e); // eslint-disable-line
+      const draggingLeft = x < mouseIsDown.x;
+      const leftOffset = mouseIsDown.x - storage.ringingChord.coords.x1;
+      const rightOffset = storage.ringingChord.coords.x2 - mouseIsDown.x;
+      const left = [];
+      const right = [];
 
-    const drawnChords = chordClassRef.current.drawHeadersAndFooters({
-      draggingChordIndex: mouseIsDown.resize
-        ? storage.ringingChord.index
-        : left.length,
-      newX: x - leftOffset,
-      resize: mouseIsDown.resize,
-      timeSignature,
-      reorderedChords:
-        !mouseIsDown.resize && storage.newIndeces.map(i => chords[i]),
-    });
-    if (mouseIsDown.resize) storage.newLengths = drawnChords.map(c => c.length);
+      mouseIsDown.drawnChords.forEach((chord, i) => {
+        if (i === storage.ringingChord.index) return;
+        const {
+          coords: { x1, x2 },
+        } = chord; // eslint-disable-line
+        const chordLength = x2 - x1;
+        const threshold = x1 + chordLength * (draggingLeft ? 0.3 : 0.7);
+        const conditionMet = draggingLeft
+          ? x - leftOffset < threshold
+          : x + rightOffset <= threshold;
+        if (conditionMet) {
+          right.push(i);
+        } else {
+          left.push(i);
+        }
+      });
+      storage.newIndeces = [...left, storage.ringingChord.index, ...right];
+
+      const drawnChords = chordClassRef.current.drawHeadersAndFooters({
+        draggingChordIndex: mouseIsDown.resize
+          ? storage.ringingChord.index
+          : left.length,
+        newX: x - leftOffset,
+        resize: mouseIsDown.resize,
+        timeSignature,
+        reorderedChords:
+          !mouseIsDown.resize && storage.newIndeces.map(i => chords[i]),
+      });
+      if (mouseIsDown.resize)
+        storage.newLengths = drawnChords.map(c => c.length);
+    }
   };
 
   const onChordUp = () => {

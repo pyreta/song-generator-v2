@@ -16,15 +16,15 @@ export default [
     notes: { 1: 0, 3: 0, 5: 0, 7: 0 },
   },
   {
-    key: 0,
-    scale: 'major',
+    key: 1,
+    scale: 'harmonicMinor',
     mode: 1,
     length: 1024,
     chord: 6,
     notes: { 1: 0, 3: 0, 5: 0, 7: 0 },
   },
   {
-    key: 0,
+    key: 1,
     scale: 'major',
     mode: 1,
     length: 1024,
