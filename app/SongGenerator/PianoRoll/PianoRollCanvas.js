@@ -277,7 +277,8 @@ class PianoRollCanvas {
     return this.rows - parseInt(noteNum, 10) + this.bottomNote - 1;
   }
 
-  drawNotesAtLocation(startTick, notes, velocity) {
+  drawNotesAtLocation(startTick, notes, options = {}) {
+    const { velocity, highlightedNotes } = options;
     const coords = [];
     const x = this.ticksToPixels(startTick) - this.scrollX + this.pianoWidth;
     Object.keys(notes).forEach(noteNum => {
@@ -290,7 +291,7 @@ class PianoRollCanvas {
         y,
         width,
         height,
-        notes[noteNum].isSelected,
+        notes[noteNum].isSelected || (highlightedNotes && highlightedNotes.noteNum),
         velocity ? notes[noteNum].velocity : null,
       );
       coords.push({ x, y, width, height, path: [startTick, noteNum] });
@@ -314,17 +315,17 @@ class PianoRollCanvas {
     }
   }
 
-  drawNotes(velocity) {
-    if (!velocity) {
+  drawNotes(options = {}) {
+    if (!options.velocity) {
       this.clear();
     }
     const noteCoords = Object.keys(this.notes).reduce((acc, startTick) => {
       return [
         ...acc,
-        ...this.drawNotesAtLocation(startTick, this.notes[startTick], velocity),
+        ...this.drawNotesAtLocation(startTick, this.notes[startTick], options),
       ];
     }, []);
-    if (!velocity) this.noteCoords = noteCoords;
+    if (!options.velocity) this.noteCoords = noteCoords;
     return noteCoords;
   }
 
@@ -507,7 +508,7 @@ class PianoRollCanvas {
       this.w,
       this.canvas.height,
     );
-    this.drawNotes(true);
+    this.drawNotes({ velocity: true });
     this.ctx.fillStyle = colors.scale;
     this.ctx.fillRect(
       0,

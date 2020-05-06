@@ -10,17 +10,27 @@ const convertTicksToMs = (ticks, bpm) => {
   return totalMiliseconds;
 };
 
-const playMidiTrack = (trackObject, outputDevice, bpm) => {
-  Object.keys(trackObject.ticks).forEach(startTick => {
+const playMidiTrack = (trackObject, outputDevice, bpm, callback) => {
+  Object.keys(trackObject.ticks).forEach((startTick, idx) => {
     const notes = trackObject.ticks[startTick];
     const start = convertTicksToMs(startTick, bpm);
-    Object.keys(notes).forEach(noteValue => {
+    const isLastTick = Object.keys(trackObject.ticks).length - 1 === idx;
+    Object.keys(notes).forEach((noteValue, idx2) => {
       const note = notes[noteValue];
       const noteVal = parseInt(noteValue, 10);
       const velocity = note.velocity / 100;
+      const isLastNote = Object.keys(notes).length - 1 === idx2;
       setTimeout(() => {
+        if (callback) callback({ startTick, noteVal, noteDown: note });
         outputDevice.playNote([noteVal], 1, { velocity });
         setTimeout(() => {
+          if (callback) {
+            callback({
+              startTick,
+              noteVal,
+              complete: callback && isLastTick && isLastNote,
+            });
+          }
           outputDevice.stopNote([noteVal], 1);
         }, convertTicksToMs(note.length, bpm) - 5);
       }, start);
@@ -28,7 +38,37 @@ const playMidiTrack = (trackObject, outputDevice, bpm) => {
   });
 };
 
-export const playMidi = (tracks, bpm) => {
+// export const playMidi = (tracks, bpm, callback) => {
+//   const milisecondsPerBeat = (60 / bpm) * 1000;
+//   const miliSecondsPerTick = milisecondsPerBeat / 128;
+//   let tick = 0;
+//   const outputs = WebMidi.outputs.reduce((acc, device) => {
+//     return {
+//       ...acc,
+//       [device.id]: device,
+//     };
+//   });
+//   const tickInterval = setInterval(() => {
+//     if (tick % 20 === 0) callback(tick);
+//     tracks.forEach(track => {
+//       const outputDevice = outputs[track.outputDevice];
+//       if (track.ticks[tick]) {
+//         // console.log(`track.ticks[tick]:`, track.ticks[tick])
+//         const notes = track.ticks[tick];
+//         Object.keys(notes).forEach(noteValue => {
+//           const note = notes[noteValue];
+//           const noteVal = parseInt(noteValue, 10);
+//           const velocity = note.velocity / 100;
+//           outputDevice.playNote([noteVal], 1, { velocity });
+//         });
+//       }
+//     });
+//     tick += 1;
+//     if (tick > 1024) clearInterval(tickInterval);
+//   }, miliSecondsPerTick);
+// };
+
+export const playMidi = (tracks, bpm, trackId, callback) => {
   const outputs = WebMidi.outputs.reduce((acc, device) => {
     return {
       ...acc,
@@ -36,7 +76,12 @@ export const playMidi = (tracks, bpm) => {
     };
   });
   tracks.forEach(track => {
-    playMidiTrack(track, outputs[track.outputDevice], bpm);
+    playMidiTrack(
+      track,
+      outputs[track.outputDevice],
+      bpm,
+      trackId === track.id && callback,
+    );
   });
 };
 

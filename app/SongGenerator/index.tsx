@@ -16,6 +16,26 @@ const Wrapper = styled.div`
   width: 1500px;
 `;
 
+const getNote = ([trackName, startTick, noteVal], tracks) => {
+  return tracks[trackName].ticks[startTick][noteVal];
+};
+
+const setNote = (note, [trackName, startTick, noteVal], tracks) => {
+  return {
+    ...tracks,
+    [trackName]: {
+      ...tracks[trackName],
+      ticks: {
+        ...tracks[trackName].ticks,
+        [startTick]: {
+          ...tracks[trackName].ticks[startTick],
+          [noteVal]: note
+        }
+      }
+    }
+  };
+};
+
 const SongGenerator = props => {
   const [bpm, setBpm] = useState(120);
   const [width, setWidth] = useState(2000);
@@ -23,6 +43,7 @@ const SongGenerator = props => {
   const [trackInPianoRoll, setTrackInPianoRoll] = useState('trackData1');
   const [tracks, setTracks] = useState({ trackData1, trackData2 });
   const [chords, setChords] = useState(chordData);
+  const [playheadLocation, setPlayheadLocation] = useState(0);
   const sizeRef = useRef();
 
   useEffect(() => {
@@ -46,10 +67,14 @@ const SongGenerator = props => {
     console.log(`note:`, note)
   };
 
+  const highlightNote = (data) => {
+    console.log(`data:`, data)
+  };
+
   return (
     <>
       <Transport
-        onPlay={() => playMidi(Object.values(tracks), bpm)}
+        onPlay={() => playMidi(Object.values(tracks), bpm, trackInPianoRoll, highlightNote)}
         onExport={() => exportMidi(Object.values(tracks))}
         setBpm={setBpm}
         bpm={bpm}
@@ -75,6 +100,8 @@ const SongGenerator = props => {
           octaves={7}
           columns={64}
           columnsPerQuarterNote={1}
+          playheadLocation={playheadLocation}
+          setPlayheadLocation={setPlayheadLocation}
           updateNoteByPath={updateNoteByPath}
           notes={tracks[trackInPianoRoll].ticks}
           chords={chords.map(c => Chord.wrap(c).pianoRollData())}

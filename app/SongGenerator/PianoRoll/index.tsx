@@ -118,6 +118,8 @@ const PianoRoll = ({
   onNotesChange,
   onChordReorder,
   onChordResize,
+  playheadLocation,
+  setPlayheadLocation,
 }) => {
   // ************************* Refs *************************
   // ************************* Refs *************************
@@ -134,7 +136,6 @@ const PianoRoll = ({
   // ************************* State *************************
   // ************************* State *************************
   // ************************* State *************************
-  const [playheadLocation, setPlayheadLocation] = useState(0);
   const [scrollX, setScrollX] = useState(0);
   const [scrollY, setScrollY] = useState(400);
   const [pianoWidth, setPianoWidth] = useState(100);
@@ -878,6 +879,8 @@ PianoRoll.propTypes = {
   onNotesChange: PropTypes.func.isRequired,
   onChordReorder: PropTypes.func.isRequired,
   onChordResize: PropTypes.func.isRequired,
+  playheadLocation: PropTypes.number.isRequired,
+  setPlayheadLocation: PropTypes.func.isRequired,
 };
 
 export default PianoRoll;
