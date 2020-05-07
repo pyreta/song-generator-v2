@@ -18,6 +18,7 @@ const storage = {
   ringingNotes: [],
   scrollXPercent: 0,
   scrollYPercent: 0,
+  playingNotes: Array(128).fill(null),
 };
 
 const zoomXMax = 1100;
@@ -120,6 +121,7 @@ const PianoRoll = ({
   onChordResize,
   playheadLocation,
   setPlayheadLocation,
+  getCallBack,
 }) => {
   // ************************* Refs *************************
   // ************************* Refs *************************
@@ -348,6 +350,19 @@ const PianoRoll = ({
     notes,
     storage.noteDelta,
   ]);
+
+  useEffect(() => {
+    getCallBack(({ noteVal, noteDown, complete, startTick }) => {
+      if (complete) {
+        storage.playingNotes = Array(128).fill(null);
+      } else {
+        storage.playingNotes[noteVal] = noteDown && startTick;
+      }
+      noteClassRef.current.drawNotes({
+        highlightedNotes: storage.playingNotes,
+      });
+    });
+  }, [noteClassRef.current]);
 
   useEffect(() => {
     const pianoRoll = new PRC(selectionRef.current, opts);
@@ -881,6 +896,7 @@ PianoRoll.propTypes = {
   onChordResize: PropTypes.func.isRequired,
   playheadLocation: PropTypes.number.isRequired,
   setPlayheadLocation: PropTypes.func.isRequired,
+  getCallBack: PropTypes.func.isRequired,
 };
 
 export default PianoRoll;

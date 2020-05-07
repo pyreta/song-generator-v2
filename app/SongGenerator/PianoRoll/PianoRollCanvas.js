@@ -291,7 +291,9 @@ class PianoRollCanvas {
         y,
         width,
         height,
-        notes[noteNum].isSelected || (highlightedNotes && highlightedNotes.noteNum),
+        notes[noteNum].isSelected ||
+          (highlightedNotes &&
+            highlightedNotes[noteNum] === startTick.toString()),
         velocity ? notes[noteNum].velocity : null,
       );
       coords.push({ x, y, width, height, path: [startTick, noteNum] });
@@ -330,6 +332,9 @@ class PianoRollCanvas {
   }
 
   getLinesPerColumn() {
+    // whole
+    // quarter
+    // 16th
     if (this.cellwidth < 5) return 16;
     if (this.cellwidth < 15) return 8;
     if (this.cellwidth < 30) return 4;

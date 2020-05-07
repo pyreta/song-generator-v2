@@ -36,6 +36,8 @@ const setNote = (note, [trackName, startTick, noteVal], tracks) => {
   };
 };
 
+let pianoRollCallback = () => console.log('not loaded');
+
 const SongGenerator = props => {
   const [bpm, setBpm] = useState(120);
   const [width, setWidth] = useState(2000);
@@ -59,17 +61,13 @@ const SongGenerator = props => {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  const updateNoteByPath = (path, data) => {
-    const note = {
-      ...tracks[trackInPianoRoll].ticks[path[0]][path[1]],
-      ...data,
-    };
-    console.log(`note:`, note)
+  const highlightNote = (data) => {
+    pianoRollCallback(data)
   };
 
-  const highlightNote = (data) => {
-    console.log(`data:`, data)
-  };
+  const getCallBack = callback => {
+    pianoRollCallback = callback;
+  }
 
   return (
     <>
@@ -97,12 +95,12 @@ const SongGenerator = props => {
           height={height}
           canvasWidthMultiple={2}
           canvasHeightMultiple={2}
+          getCallBack={getCallBack}
           octaves={7}
           columns={64}
           columnsPerQuarterNote={1}
           playheadLocation={playheadLocation}
           setPlayheadLocation={setPlayheadLocation}
-          updateNoteByPath={updateNoteByPath}
           notes={tracks[trackInPianoRoll].ticks}
           chords={chords.map(c => Chord.wrap(c).pianoRollData())}
           onNotesChange={ticks => {
