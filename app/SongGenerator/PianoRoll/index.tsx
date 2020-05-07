@@ -730,7 +730,10 @@ const PianoRoll = ({
       if (storage.ringingChord) return onChordDrag(e);
       const data = analyzeMousePosition(e);
       if (pianoClassRef.current) {
-        pianoClassRef.current.drawPiano({ highlightedNote: data.noteNum });
+        pianoClassRef.current.drawPiano({
+          highlightedNote: data.noteNum,
+          location: data.location,
+        });
       }
 
       if (mouseIsDown) {

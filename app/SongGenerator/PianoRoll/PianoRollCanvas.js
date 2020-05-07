@@ -17,6 +17,7 @@ const colors = {
   border3: '#FFFFFF',
   scale: '#2B383F',
   chord: '#484842',
+  hover: '#ffa50057',
 };
 
 const chordColors = [
@@ -532,7 +533,7 @@ class PianoRollCanvas {
   }
 
   drawPiano(options = {}) {
-    const { highlightedNote } = options;
+    const { highlightedNote, location } = options;
     this.clear();
     for (let row = 0; row < this.rows; row += 1) {
       const y = row * this.cellheight;
@@ -563,16 +564,18 @@ class PianoRollCanvas {
       this.ctx.fill();
       this.ctx.stroke();
     }
+    if (location) this.drawPlayHead(location, true);
   }
 
-  drawPlayHead(startTick) {
-    this.clear();
+  drawPlayHead(startTick, hover) {
+    if (!hover) this.clear();
     const x = this.ticksToPixels(startTick) + this.pianoWidth - this.scrollX;
     this.ctx.beginPath();
-    this.ctx.strokeStyle = colors.border1;
+    this.ctx.strokeStyle = hover ? colors.hover : colors.border1;
     this.ctx.moveTo(x, this.chordsHeight);
     this.ctx.lineTo(x, this.canvas.height - this.velocityHeight);
     this.ctx.stroke();
+    return x - this.pianoWidth;
   }
 }
 export default PianoRollCanvas;
