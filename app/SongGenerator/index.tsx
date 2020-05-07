@@ -72,7 +72,7 @@ const SongGenerator = props => {
   return (
     <>
       <Transport
-        onPlay={() => playMidi(Object.values(tracks), bpm, trackInPianoRoll, highlightNote)}
+        onPlay={() => playMidi(Object.values(tracks), bpm, trackInPianoRoll, highlightNote, playheadLocation)}
         onExport={() => exportMidi(Object.values(tracks))}
         setBpm={setBpm}
         bpm={bpm}

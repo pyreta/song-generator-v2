@@ -10,31 +10,33 @@ const convertTicksToMs = (ticks, bpm) => {
   return totalMiliseconds;
 };
 
-const playMidiTrack = (trackObject, outputDevice, bpm, callback) => {
+const playMidiTrack = (trackObject, outputDevice, bpm, callback, start) => {
   Object.keys(trackObject.ticks).forEach((startTick, idx) => {
-    const notes = trackObject.ticks[startTick];
-    const start = convertTicksToMs(startTick, bpm);
-    const isLastTick = Object.keys(trackObject.ticks).length - 1 === idx;
-    Object.keys(notes).forEach((noteValue, idx2) => {
-      const note = notes[noteValue];
-      const noteVal = parseInt(noteValue, 10);
-      const velocity = note.velocity / 100;
-      const isLastNote = Object.keys(notes).length - 1 === idx2;
-      setTimeout(() => {
-        if (callback) callback({ startTick, noteVal, noteDown: note });
-        outputDevice.playNote([noteVal], 1, { velocity });
+    if (startTick >= start) {
+      const notes = trackObject.ticks[startTick];
+      const startMs = convertTicksToMs(startTick - start, bpm);
+      const isLastTick = Object.keys(trackObject.ticks).length - 1 === idx;
+      Object.keys(notes).forEach((noteValue, idx2) => {
+        const note = notes[noteValue];
+        const noteVal = parseInt(noteValue, 10);
+        const velocity = note.velocity / 100;
+        const isLastNote = Object.keys(notes).length - 1 === idx2;
         setTimeout(() => {
-          if (callback) {
-            callback({
-              startTick,
-              noteVal,
-              complete: callback && isLastTick && isLastNote,
-            });
-          }
-          outputDevice.stopNote([noteVal], 1);
-        }, convertTicksToMs(note.length, bpm) - 5);
-      }, start);
-    });
+          if (callback) callback({ startTick, noteVal, noteDown: note });
+          outputDevice.playNote([noteVal], 1, { velocity });
+          setTimeout(() => {
+            if (callback) {
+              callback({
+                startTick,
+                noteVal,
+                complete: callback && isLastTick && isLastNote,
+              });
+            }
+            outputDevice.stopNote([noteVal], 1);
+          }, convertTicksToMs(note.length, bpm) - 5);
+        }, startMs);
+      });
+    }
   });
 };
 
@@ -68,7 +70,7 @@ const playMidiTrack = (trackObject, outputDevice, bpm, callback) => {
 //   }, miliSecondsPerTick);
 // };
 
-export const playMidi = (tracks, bpm, trackId, callback) => {
+export const playMidi = (tracks, bpm, trackId, callback, start) => {
   const outputs = WebMidi.outputs.reduce((acc, device) => {
     return {
       ...acc,
@@ -81,6 +83,7 @@ export const playMidi = (tracks, bpm, trackId, callback) => {
       outputs[track.outputDevice],
       bpm,
       trackId === track.id && callback,
+      start,
     );
   });
 };
