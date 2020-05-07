@@ -1,22 +1,22 @@
 export default [
   {
-    key: 0,
-    scale: 'major',
+    key: 3,
+    scale: 'harmonicMinor',
     mode: 1,
     length: 1024,
     chord: 1,
     notes: { 1: 0, 3: 0, 5: 0, 7: 0 },
   },
   {
-    key: 0,
-    scale: 'major',
+    key: 3,
+    scale: 'harmonicMinor',
     mode: 1,
     length: 1024,
     chord: 5,
     notes: { 1: 0, 3: 0, 5: 0, 7: 0 },
   },
   {
-    key: 1,
+    key: 3,
     scale: 'harmonicMinor',
     mode: 1,
     length: 1024,
@@ -24,8 +24,8 @@ export default [
     notes: { 1: 0, 3: 0, 5: 0, 7: 0 },
   },
   {
-    key: 1,
-    scale: 'major',
+    key: 3,
+    scale: 'harmonicMinor',
     mode: 1,
     length: 1024,
     chord: 4,

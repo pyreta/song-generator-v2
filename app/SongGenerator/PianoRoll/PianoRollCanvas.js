@@ -236,10 +236,14 @@ class PianoRollCanvas {
     return Math.floor((y + this.scrollY - this.headerHeight) / this.cellheight);
   }
 
-  getNoteNumFromCoords(x, y) {
-    const row = this.getRow(x, y);
+  getNoteNumFromRow(row) {
     const note = this.rows - row + this.bottomNote - 1;
     return note;
+  }
+
+  getNoteNumFromCoords(x, y) {
+    const row = this.getRow(x, y);
+    return this.getNoteNumFromRow(row);
   }
 
   at(x, y) {
@@ -267,9 +271,13 @@ class PianoRollCanvas {
     return parseInt(ticks, 10) * (this.cellwidth / this.ticksPerColumn);
   }
 
-  pixelsToTicks(pixels) {
+  convertPixelsToTicks(pixels) {
     const pixelsPerTick = this.cellwidth / 128;
-    const ticks = Math.floor(pixels / pixelsPerTick) - 2;
+    return Math.floor(pixels / pixelsPerTick) - 2;
+  }
+
+  pixelsToTicks(pixels) {
+    const ticks = this.convertPixelsToTicks(pixels);
     return ticks < 0 ? 0 : ticks;
   }
 
@@ -523,21 +531,27 @@ class PianoRollCanvas {
     );
   }
 
-  drawPiano() {
+  drawPiano(options = {}) {
+    const { highlightedNote } = options;
     this.clear();
     for (let row = 0; row < this.rows; row += 1) {
       const y = row * this.cellheight;
+      const noteNum = this.getNoteNumFromRow(row);
       this.ctx.beginPath();
-      switch (this.bottomNote - 1 - (row % 12)) {
-        case 1:
-        case 3:
-        case 6:
-        case 8:
-        case 10:
-          this.ctx.fillStyle = colors.blackKey;
-          break;
-        default:
-          this.ctx.fillStyle = colors.whiteKey;
+      if (highlightedNote === noteNum) {
+        this.ctx.fillStyle = colors.border1;
+      } else {
+        switch (this.bottomNote - 1 - (row % 12)) {
+          case 1:
+          case 3:
+          case 6:
+          case 8:
+          case 10:
+            this.ctx.fillStyle = colors.blackKey;
+            break;
+          default:
+            this.ctx.fillStyle = colors.whiteKey;
+        }
       }
       this.ctx.strokeStyle = colors.line;
       this.ctx.rect(

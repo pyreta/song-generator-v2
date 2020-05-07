@@ -132,6 +132,7 @@ const PianoRoll = ({
   const headerAndFooterRef = useRef();
   const noteClassRef = useRef();
   const chordClassRef = useRef();
+  const pianoClassRef = useRef();
   const selectionRef = useRef();
   const playheadRef = useRef();
 
@@ -248,8 +249,8 @@ const PianoRoll = ({
 
   useEffect(() => {
     const canvas = pianoRef.current;
-    const pianoRoll = new PRC(canvas, opts);
-    pianoRoll.drawPiano();
+    pianoClassRef.current = new PRC(canvas, opts);
+    pianoClassRef.current.drawPiano();
   }, [
     scrollX,
     scrollY,
@@ -728,6 +729,9 @@ const PianoRoll = ({
     const onMouseMove = e => {
       if (storage.ringingChord) return onChordDrag(e);
       const data = analyzeMousePosition(e);
+      if (pianoClassRef.current) {
+        pianoClassRef.current.drawPiano({ highlightedNote: data.noteNum });
+      }
 
       if (mouseIsDown) {
         if (data.piano) onPianoDown(data);
