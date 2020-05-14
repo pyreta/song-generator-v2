@@ -17,7 +17,7 @@ const colors = {
   border3: '#FFFFFF',
   scale: '#2B383F',
   chord: '#484842',
-  hover: '#ffa50057',
+  hover: '#ff8d0052',
 };
 
 const chordColors = [
@@ -63,6 +63,9 @@ class PianoRollCanvas {
       canvasWidthMultiple = 10,
       canvasHeightMultiple = 10,
       snapToGrid = false,
+      zoomToPlayhead = true,
+      playheadLocation = 0,
+      playheadPixelLocation = 0,
       chords = [],
       notes,
     } = {},
@@ -77,6 +80,8 @@ class PianoRollCanvas {
       velocityHeight;
     this.pianoWidth = pianoWidth;
     this.barsHeight = barsHeight;
+    this.playheadLocation = playheadLocation;
+    this.playheadPixelLocation = playheadPixelLocation;
     this.chordsHeight = chordsHeight;
     this.velocityHeight = velocityHeight;
     this.rows = octaves * 12;
@@ -97,6 +102,7 @@ class PianoRollCanvas {
     this.noteCoords = null;
     this.chordCoords = null;
     this.snapToGrid = snapToGrid;
+    this.zoomToPlayhead = zoomToPlayhead;
     this.chords = chords;
     this.velocityHeighPercent = 0.96;
   }
@@ -352,10 +358,6 @@ class PianoRollCanvas {
     return 0.5;
   }
 
-  getNoteNumFromRow(row) {
-    return this.rows - row + this.bottomNote - 1;
-  }
-
   drawBars(drawEvery, color, lineWidth) {
     for (let column = 1; column <= this.columns; column += 1) {
       if (column % drawEvery === 0) {
@@ -564,18 +566,29 @@ class PianoRollCanvas {
       this.ctx.fill();
       this.ctx.stroke();
     }
-    if (location) this.drawPlayHead(location, true);
+    if (location) this.drawLine(location, colors.hover);
   }
 
-  drawPlayHead(startTick, hover) {
-    if (!hover) this.clear();
-    const x = this.ticksToPixels(startTick) + this.pianoWidth - this.scrollX;
+  drawPlayHead() {
+    this.clear();
+    const x = this.drawLine(this.playheadLocation, colors.border1);
+    const zoomOffset = x - this.playheadPixelLocation;
+    const newXScrollValue = this.scrollX + zoomOffset;
+    return newXScrollValue;
+  }
+
+  drawLine(startTick, color) {
+    const x =
+      this.ticksToPixels(startTick || this.playheadLocation) +
+      this.pianoWidth -
+      this.scrollX;
     this.ctx.beginPath();
-    this.ctx.strokeStyle = hover ? colors.hover : colors.border1;
+    this.ctx.strokeStyle = color;
     this.ctx.moveTo(x, this.chordsHeight);
     this.ctx.lineTo(x, this.canvas.height - this.velocityHeight);
     this.ctx.stroke();
     return x - this.pianoWidth;
   }
 }
+
 export default PianoRollCanvas;

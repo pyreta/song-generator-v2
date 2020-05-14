@@ -18,6 +18,8 @@ const storage = {
   ringingNotes: [],
   scrollXPercent: 0,
   scrollYPercent: 0,
+  playheadPixelLocation: 0,
+  lastData: [],
   playingNotes: Array(128).fill(null),
 };
 
@@ -151,28 +153,12 @@ const PianoRoll = ({
   const [drawVelocity] = useState(42);
   const [timeSignature] = useState([4, 16]);
   const [mouseIsDown, setMouseIsDown] = useState(false);
-  const [zoomToPlayhead] = useState(true);
+  const [zoomToPlayhead, setZoomToPlayhead] = useState(true);
   const [selectionCoords, setSelectionCoords] = useState(null);
   const zoomXAmount = zoomX / 100;
   const zoomYAmount = zoomY / 100;
   const maxScrollWidth = width * canvasWidthMultiple * zoomXAmount - width;
   const maxScrollHeight = height * canvasHeightMultiple * zoomYAmount - height;
-
-  useEffect(() => {
-    if (zoomToPlayhead) {
-      storage.scrollXPercent =
-        playheadLocation / (columns * 128 * columnsPerQuarterNote);
-    } else {
-      storage.scrollXPercent = scrollX / maxScrollWidth;
-    }
-  }, [
-    scrollX,
-    width,
-    playheadLocation,
-    columns,
-    columnsPerQuarterNote,
-    zoomToPlayhead,
-  ]);
 
   useEffect(() => {
     if (maxScrollHeight > 0) storage.scrollYPercent = scrollY / maxScrollHeight;
@@ -182,13 +168,15 @@ const PianoRoll = ({
     setScrollY(maxScrollHeight * storage.scrollYPercent);
   }, [zoomY, maxScrollHeight]);
 
-  useEffect(() => {
-    setScrollX(maxScrollWidth * storage.scrollXPercent);
-  }, [zoomX]);
-
-  const changeScrollX = e => setScrollX(parseInt(e.target.value, 10));
+  const changeScrollX = e => {
+    setZoomToPlayhead(false);
+    setScrollX(parseInt(e.target.value, 10));
+  };
   const changeScrollY = e => setScrollY(parseInt(e.target.value, 10));
-  const changeZoomX = e => setZoomX(parseInt(e.target.value, 10));
+  const changeZoomX = e => {
+    setZoomToPlayhead(true);
+    setZoomX(parseInt(e.target.value, 10));
+  };
   const changeZoomY = e => setZoomY(parseInt(e.target.value, 10));
   const changePianoWidth = e => setPianoWidth(parseInt(e.target.value, 10));
 
@@ -232,8 +220,11 @@ const PianoRoll = ({
     columns,
     pianoWidth,
     columnsPerQuarterNote,
+    playheadLocation,
     snapToGrid,
+    zoomToPlayhead,
     chords,
+    playheadPixelLocation: storage.playheadPixelLocation,
     notes: updatedNotes,
   };
 
@@ -312,7 +303,10 @@ const PianoRoll = ({
   useEffect(() => {
     const canvas = playheadRef.current;
     const pianoRoll = new PRC(canvas, opts);
-    pianoRoll.drawPlayHead(playheadLocation);
+    const newXScrollValue = pianoRoll.drawPlayHead();
+    if (zoomToPlayhead && Math.floor(newXScrollValue) !== Math.floor(scrollX)) {
+      setScrollX(newXScrollValue < 0 ? 0 : newXScrollValue);
+    }
   }, [
     scrollX,
     scrollY,
@@ -406,6 +400,18 @@ const PianoRoll = ({
 
   const snap = tick => {
     return snapToGrid ? Math.floor(tick / tickDivision) * tickDivision : tick;
+  };
+
+  const ticksToPixels = tick => {
+    const w = width * zoomXAmount * canvasWidthMultiple - pianoWidth;
+    const cellwidth = w / columns;
+    const ticksPerColumn = 128 / columnsPerQuarterNote;
+    return parseInt(tick, 10) * (cellwidth / ticksPerColumn);
+  };
+
+  const snapPixels = tick => {
+    const snappedTick = snap(tick);
+    return ticksToPixels(snappedTick);
   };
 
   const deselectAll = () => onNotesChange(noteClassRef.current.deselectAll());
@@ -568,17 +574,30 @@ const PianoRoll = ({
   // ************************* Measures (Bars) ************************* handlers
 
   const onMeasuresDown = data => {
-    setPlayheadLocation(snap(data.location));
+    const snappedPlayheadLoc = data.location;
+    const snappedPixels = ticksToPixels(data.location) - scrollX;
+    storage.playheadPixelLocation = snappedPixels;
+    setPlayheadLocation(snappedPlayheadLoc);
   };
 
   const onMeasuresDrag = data => {
-    setPlayheadLocation(snap(data.location < 0 ? 0 : data.location));
     const yDelta = data.y - mouseIsDown.y;
+    const yDelta2 = data.y - storage.lastData[0].y;
+    const xDelta2 = data.x - storage.lastData[0].x;
     let newZoom = mouseIsDown.zoomX + yDelta;
     if (newZoom < 100 / canvasWidthMultiple)
       newZoom = 100 / canvasWidthMultiple;
     if (newZoom > zoomXMax) newZoom = zoomXMax;
-    setZoomX(newZoom);
+    setZoomToPlayhead(true);
+    if (Math.abs(yDelta2) > Math.abs(xDelta2)) {
+      setZoomX(newZoom);
+    } else {
+      setPlayheadLocation(data.location);
+      const snappedPixels = ticksToPixels(data.location) - scrollX;
+      storage.playheadPixelLocation = snappedPixels;
+    }
+    storage.lastData.shift();
+    storage.lastData.push({ x: data.x, y: data.y });
   };
 
   const onMeasuresHover = () => {
@@ -713,6 +732,14 @@ const PianoRoll = ({
   const onMouseDown = e => {
     if (isRightClick(e)) return onRightClick(e);
     const data = analyzeMousePosition(e);
+    const { x, y } = data;
+    storage.lastData = [
+      { x, y },
+      { x, y },
+      { x, y },
+      { x, y },
+      { x, y },
+    ];
     setMouseIsDown({
       ...data,
       zoomX,
@@ -727,7 +754,6 @@ const PianoRoll = ({
 
   useEffect(() => {
     const onMouseMove = e => {
-      if (storage.ringingChord) return onChordDrag(e);
       const data = analyzeMousePosition(e);
       if (pianoClassRef.current) {
         pianoClassRef.current.drawPiano({
@@ -735,6 +761,7 @@ const PianoRoll = ({
           location: data.location,
         });
       }
+      if (storage.ringingChord) return onChordDrag(e);
 
       if (mouseIsDown) {
         if (data.piano) onPianoDown(data);
@@ -743,7 +770,7 @@ const PianoRoll = ({
         if (data.velocity) return onVelocityDrag(data);
         return onGridDrag(data);
       }
-
+      setZoomToPlayhead(false);
       if (data.piano) return onPianoHover(data);
       if (data.onMeasuresHeader) return onMeasuresHover(data);
       if (data.onChordHeader && data.chordIsPresent) return onChordHover(data);
@@ -756,6 +783,12 @@ const PianoRoll = ({
 
   useEffect(() => {
     const onMouseUp = e => {
+      if (storage.lastData.length) {
+        storage.lastData = [];
+        setPlayheadLocation(snap(playheadLocation));
+        const snappedPixels = snapPixels(playheadLocation) - scrollX;
+        storage.playheadPixelLocation = snappedPixels;
+      }
       const data = analyzeMousePosition(e);
       storage.ringingNotes.forEach(noteNum => onPianoKeyUp(noteNum));
       if (storage.ringingNote) {
