@@ -6,6 +6,7 @@ import PianoRoll from './PianoRoll';
 import Transport from './Transport';
 import { trackData1, trackData2 } from './trackData';
 import chordData from './chordData';
+import timeSignatureData from './timeSignatureData';
 import { exportMidi, playMidi } from './helpers';
 import Chord from './models/Chord';
 
@@ -44,6 +45,7 @@ const SongGenerator = props => {
   const [height, setHeight] = useState(400);
   const [trackInPianoRoll, setTrackInPianoRoll] = useState('trackData1');
   const [tracks, setTracks] = useState({ trackData1, trackData2 });
+  const [timeSignatures, setTimeSigatures] = useState(timeSignatureData);
   const [chords, setChords] = useState(chordData);
   const [playheadLocation, setPlayheadLocation] = useState(0);
   const sizeRef = useRef();
@@ -96,6 +98,7 @@ const SongGenerator = props => {
           canvasWidthMultiple={2}
           canvasHeightMultiple={2}
           getCallBack={getCallBack}
+          timeSignatures={timeSignatures}
           octaves={7}
           columns={64}
           columnsPerQuarterNote={1}

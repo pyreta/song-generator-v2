@@ -124,6 +124,7 @@ const PianoRoll = ({
   playheadLocation,
   setPlayheadLocation,
   getCallBack,
+  timeSignatures,
 }) => {
   // ************************* Refs *************************
   // ************************* Refs *************************
@@ -223,6 +224,7 @@ const PianoRoll = ({
     playheadLocation,
     snapToGrid,
     zoomToPlayhead,
+    timeSignatures,
     chords,
     playheadPixelLocation: storage.playheadPixelLocation,
     notes: updatedNotes,
@@ -277,6 +279,7 @@ const PianoRoll = ({
     snapToGrid,
     pianoWidth,
     chords,
+    timeSignatures,
   ]);
 
   useEffect(() => {
@@ -298,6 +301,7 @@ const PianoRoll = ({
     columnsPerQuarterNote,
     snapToGrid,
     chords,
+    timeSignatures,
   ]);
 
   useEffect(() => {
@@ -732,6 +736,7 @@ const PianoRoll = ({
   const onMouseDown = e => {
     if (isRightClick(e)) return onRightClick(e);
     const data = analyzeMousePosition(e);
+    console.log(`data.timeSignature:`, data.timeSignature)
     const { x, y } = data;
     storage.lastData = [
       { x, y },
@@ -919,6 +924,7 @@ const PianoRoll = ({
 };
 
 PianoRoll.propTypes = {
+  timeSignatures: PropTypes.object.isRequired, // eslint-disable-line
   notes: PropTypes.object.isRequired, // eslint-disable-line
   height: PropTypes.number.isRequired,
   width: PropTypes.number.isRequired,

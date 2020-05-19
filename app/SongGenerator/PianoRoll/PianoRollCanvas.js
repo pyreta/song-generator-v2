@@ -18,6 +18,8 @@ const colors = {
   scale: '#2B383F',
   chord: '#484842',
   hover: '#ff8d0052',
+  hover2: '#4f5e653d',
+  hover3: '#e668682b',
 };
 
 const chordColors = [
@@ -41,6 +43,17 @@ const chordColors = [
 function rectsIntersect(r1, r2) {
   return !(r2.x1 > r1.x2 || r2.x2 < r1.x1 || r2.y1 > r1.y2 || r2.y2 < r1.y1);
 }
+
+const getFromLocation = (location, obj) => {
+  const locs = Object.keys(obj)
+    .map(x => parseInt(x, 10))
+    .sort()
+    .reverse();
+  for (const loc of locs) {   // eslint-disable-line
+    if (location >= loc) return obj[loc];
+  }
+  return obj[0];
+};
 
 class PianoRollCanvas {
   constructor(
@@ -66,6 +79,8 @@ class PianoRollCanvas {
       zoomToPlayhead = true,
       playheadLocation = 0,
       playheadPixelLocation = 0,
+      granularityDivision = 8,
+      timeSignatures = { 0: [4, 4] },
       chords = [],
       notes,
     } = {},
@@ -79,6 +94,7 @@ class PianoRollCanvas {
       this.headerHeight -
       velocityHeight;
     this.pianoWidth = pianoWidth;
+    this.timeSignatures = timeSignatures;
     this.barsHeight = barsHeight;
     this.playheadLocation = playheadLocation;
     this.playheadPixelLocation = playheadPixelLocation;
@@ -105,6 +121,7 @@ class PianoRollCanvas {
     this.zoomToPlayhead = zoomToPlayhead;
     this.chords = chords;
     this.velocityHeighPercent = 0.96;
+    this.granularity = 128 / granularityDivision;
   }
 
   clear() {
@@ -253,6 +270,14 @@ class PianoRollCanvas {
     return this.getNoteNumFromRow(row);
   }
 
+  getTimeSignatureFromLocation(location) {
+    return getFromLocation(location, this.timeSignatures);
+  }
+
+  getBpmFromLocation(location) {
+    return getFromLocation(location, this.bpms);
+  }
+
   at(x, y) {
     const column = (x + this.scrollX - this.pianoWidth) / this.cellwidth;
     const piano = x <= this.pianoWidth;
@@ -268,6 +293,7 @@ class PianoRollCanvas {
       location,
       piano,
       onMeasuresHeader,
+      timeSignature: this.getTimeSignatureFromLocation(location),
       velocity,
       x,
       y,
@@ -358,28 +384,24 @@ class PianoRollCanvas {
     return 0.5;
   }
 
-  drawBars(drawEvery, color, lineWidth) {
-    for (let column = 1; column <= this.columns; column += 1) {
-      if (column % drawEvery === 0) {
-        this.ctx.beginPath();
-        this.ctx.strokeStyle = color;
-        this.ctx.moveTo(
-          column * this.cellwidth + this.pianoWidth - this.scrollX,
-          0,
-        );
-        this.ctx.lineWidth = lineWidth || 1;
-        this.ctx.lineTo(
-          column * this.cellwidth + this.pianoWidth - this.scrollX,
-          this.h,
-        );
-        this.ctx.stroke();
+  drawMeasuresGrid() {
+    let timeSignature = this.timeSignatures[0];
+    const totalTicks = this.columns * this.ticksPerColumn;
+    for (
+      let location = 0;
+      location <= totalTicks;
+      location += this.granularity
+    ) {
+      const tickDivision = (4 / timeSignature[1]) * 128;
+      const measureLength = tickDivision * timeSignature[0];
+      const isBeginningOfMeasure = location % measureLength === 0;
+      timeSignature = this.getTimeSignatureFromLocation(location);
+      if (isBeginningOfMeasure) {
+        this.drawLine(location, colors.hover3, 2);
+      } else if (location % tickDivision === 0) {
+        this.drawLine(location, colors.hover2);
       }
     }
-  }
-
-  drawMeasuresGrid() {
-    this.drawBars(2, colors.line);
-    this.drawBars(4, colors.background);
   }
 
   drawChordGrid() {
@@ -400,7 +422,7 @@ class PianoRollCanvas {
           this.ctx.rect(rectX, rectY, chordPixelLength, this.cellheight);
           this.ctx.fill();
           if (rowNote % 12 === chord.key) {
-            this.ctx.fillStyle = colors.border1;
+            this.ctx.fillStyle = colors.hover;
             this.ctx.fillRect(
               rectX,
               rectY + this.cellheight - 3,
@@ -577,13 +599,14 @@ class PianoRollCanvas {
     return newXScrollValue;
   }
 
-  drawLine(startTick, color) {
+  drawLine(startTick, color, lineWidth) {
     const x =
       this.ticksToPixels(startTick || this.playheadLocation) +
       this.pianoWidth -
       this.scrollX;
     this.ctx.beginPath();
     this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = lineWidth || 1;
     this.ctx.moveTo(x, this.chordsHeight);
     this.ctx.lineTo(x, this.canvas.height - this.velocityHeight);
     this.ctx.stroke();
