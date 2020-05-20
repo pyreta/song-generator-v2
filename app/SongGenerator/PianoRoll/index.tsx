@@ -736,7 +736,6 @@ const PianoRoll = ({
   const onMouseDown = e => {
     if (isRightClick(e)) return onRightClick(e);
     const data = analyzeMousePosition(e);
-    console.log(`data.timeSignature:`, data.timeSignature)
     const { x, y } = data;
     storage.lastData = [
       { x, y },
@@ -763,7 +762,7 @@ const PianoRoll = ({
       if (pianoClassRef.current) {
         pianoClassRef.current.drawPiano({
           highlightedNote: data.noteNum,
-          location: data.location,
+          location: data.velocity && data.location, // <--- show cursor on hover
         });
       }
       if (storage.ringingChord) return onChordDrag(e);

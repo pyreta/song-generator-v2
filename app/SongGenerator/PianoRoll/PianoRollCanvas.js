@@ -20,6 +20,7 @@ const colors = {
   hover: '#ff8d0052',
   hover2: '#4f5e653d',
   hover3: '#e668682b',
+  hover4: 'rgba(15, 168, 209, 0.48)',
 };
 
 const chordColors = [
@@ -372,20 +373,9 @@ class PianoRollCanvas {
     return noteCoords;
   }
 
-  getLinesPerColumn() {
-    // whole
-    // quarter
-    // 16th
-    if (this.cellwidth < 5) return 16;
-    if (this.cellwidth < 15) return 8;
-    if (this.cellwidth < 30) return 4;
-    if (this.cellwidth < 70) return 2;
-    if (this.cellwidth < 120) return 1;
-    return 0.5;
-  }
-
   drawMeasuresGrid() {
     let timeSignature = this.timeSignatures[0];
+    let startLoc = 0;
     const totalTicks = this.columns * this.ticksPerColumn;
     for (
       let location = 0;
@@ -394,12 +384,15 @@ class PianoRollCanvas {
     ) {
       const tickDivision = (4 / timeSignature[1]) * 128;
       const measureLength = tickDivision * timeSignature[0];
-      const isBeginningOfMeasure = location % measureLength === 0;
+      const isBeginningOfMeasure = (location - startLoc) % measureLength === 0;
       timeSignature = this.getTimeSignatureFromLocation(location);
       if (isBeginningOfMeasure) {
+        startLoc = location;
         this.drawLine(location, colors.hover3, 2);
       } else if (location % tickDivision === 0) {
         this.drawLine(location, colors.hover2);
+      } else if (this.cellwidth > 150) {
+        this.drawLine(location, colors.hover3);
       }
     }
   }
@@ -588,7 +581,7 @@ class PianoRollCanvas {
       this.ctx.fill();
       this.ctx.stroke();
     }
-    if (location) this.drawLine(location, colors.hover);
+    if (location) this.drawLine(location, colors.hover4 );
   }
 
   drawPlayHead() {
