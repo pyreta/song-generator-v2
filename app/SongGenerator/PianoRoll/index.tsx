@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import WebMidi from 'webmidi';
 import { dissocPath, assocPath, flatten } from 'ramda';
 import PRC from './PianoRollCanvas';
+import useKeyDown from './useKeyDown';
 
 const isRightClick = e => e.which === 3 || e.nativeEvent.which === 3;
 
@@ -160,6 +161,46 @@ const PianoRoll = ({
   const zoomYAmount = zoomY / 100;
   const maxScrollWidth = width * canvasWidthMultiple * zoomXAmount - width;
   const maxScrollHeight = height * canvasHeightMultiple * zoomYAmount - height;
+  const keysDown = useKeyDown();
+
+  const pasteNotes = () => {
+    const earliestTick = storage.clipboard
+      .map(x => parseInt(x.startTick, 10))
+      .sort((a, b) => a - b)[0];
+    const delta = { startTick: playheadLocation - earliestTick };
+
+    const newNotes = mergeNotes(
+      mergeSelectionsWithDelta(storage.clipboard, delta),
+      noteClassRef.current.deselectAll(),
+    );
+    onNotesChange(newNotes);
+  };
+
+  const copyNotes = () => {
+    const { selected, notSelected } = seperateSelected(notes);
+    storage.clipboard = selected;
+    return notSelected;
+  };
+
+  const cutNotes = () => onNotesChange(copyNotes());
+
+  useEffect(() => {
+    if (keysDown.Meta && keysDown.c) copyNotes();
+  }, [keysDown.Meta, keysDown.c]);
+
+  useEffect(() => {
+    if (keysDown.Meta && keysDown.x) cutNotes();
+  }, [keysDown.Meta, keysDown.x]);
+
+  useEffect(() => {
+    if (keysDown.Meta && keysDown.v) pasteNotes();
+  }, [keysDown.Meta, keysDown.v]);
+
+  useEffect(() => {
+    if (keysDown.Meta && keysDown.a) {
+      onNotesChange(noteClassRef.current.selectAll());
+    }
+  }, [keysDown.Meta, keysDown.a]);
 
   useEffect(() => {
     if (maxScrollHeight > 0) storage.scrollYPercent = scrollY / maxScrollHeight;
@@ -882,6 +923,13 @@ const PianoRoll = ({
         </button>
         <button type="button" onClick={() => onNotesChange({})}>
           CLEAR
+        </button>
+        <button type="button" onClick={cutNotes}>CUT</button>
+        <button type="button" onClick={copyNotes}>COPY</button>
+        <button
+          type="button"
+          onClick={pasteNotes}>
+          PASTE
         </button>
       </Flex>
 

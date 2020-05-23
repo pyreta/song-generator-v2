@@ -21,6 +21,7 @@ const colors = {
   hover2: '#4f5e653d',
   hover3: '#e668682b',
   hover4: 'rgba(15, 168, 209, 0.48)',
+  barLine: '#09161d57',
 };
 
 const chordColors = [
@@ -388,11 +389,11 @@ class PianoRollCanvas {
       timeSignature = this.getTimeSignatureFromLocation(location);
       if (isBeginningOfMeasure) {
         startLoc = location;
-        this.drawLine(location, colors.hover3, 2);
+        this.drawVerticalLine(location, colors.hover3, { lineWidth: 2 });
       } else if (location % tickDivision === 0) {
-        this.drawLine(location, colors.hover2);
+        this.drawVerticalLine(location, colors.barLine);
       } else if (this.cellwidth > 150) {
-        this.drawLine(location, colors.hover3);
+        this.drawVerticalLine(location, colors.hover2);
       }
     }
   }
@@ -522,6 +523,36 @@ class PianoRollCanvas {
       this.w,
       this.barsHeight,
     );
+    let timeSignature = this.timeSignatures[0];
+    let startLoc = 0;
+    const totalTicks = this.columns * this.ticksPerColumn;
+    for (
+      let location = 0;
+      location <= totalTicks;
+      location += this.granularity
+    ) {
+      const tickDivision = (4 / timeSignature[1]) * 128;
+      const measureLength = tickDivision * timeSignature[0];
+      const isBeginningOfMeasure = (location - startLoc) % measureLength === 0;
+      timeSignature = this.getTimeSignatureFromLocation(location);
+      if (isBeginningOfMeasure) {
+        startLoc = location;
+        this.drawVerticalLine(location, colors.barLine, {
+          y1: this.chordsHeight,
+          y2: this.headerHeight,
+        });
+      } else if (location % tickDivision === 0) {
+        this.drawVerticalLine(location, colors.hover2, {
+          y1: this.chordsHeight,
+          y2: this.headerHeight - this.barsHeight / 2,
+        });
+      } else if (this.cellwidth > 150) {
+        this.drawVerticalLine(location, colors.hover2, {
+          y1: this.chordsHeight,
+          y2: this.chordsHeight + this.headerHeight * 0.1,
+        });
+      }
+    }
   }
 
   drawVelocity() {
@@ -581,18 +612,18 @@ class PianoRollCanvas {
       this.ctx.fill();
       this.ctx.stroke();
     }
-    if (location) this.drawLine(location, colors.hover4 );
+    if (location) this.drawVerticalLine(location, colors.hover4);
   }
 
   drawPlayHead() {
     this.clear();
-    const x = this.drawLine(this.playheadLocation, colors.border1);
+    const x = this.drawVerticalLine(this.playheadLocation, colors.border1);
     const zoomOffset = x - this.playheadPixelLocation;
     const newXScrollValue = this.scrollX + zoomOffset;
     return newXScrollValue;
   }
 
-  drawLine(startTick, color, lineWidth) {
+  drawVerticalLine(startTick, color, { lineWidth, y1, y2 } = {}) {
     const x =
       this.ticksToPixels(startTick || this.playheadLocation) +
       this.pianoWidth -
@@ -600,8 +631,8 @@ class PianoRollCanvas {
     this.ctx.beginPath();
     this.ctx.strokeStyle = color;
     this.ctx.lineWidth = lineWidth || 1;
-    this.ctx.moveTo(x, this.chordsHeight);
-    this.ctx.lineTo(x, this.canvas.height - this.velocityHeight);
+    this.ctx.moveTo(x, y1 || this.headerHeight);
+    this.ctx.lineTo(x, y2 || this.canvas.height - this.velocityHeight);
     this.ctx.stroke();
     return x - this.pianoWidth;
   }

@@ -66,19 +66,19 @@ export default class MenuBuilder {
         { type: 'separator' },
         {
           label: 'Hide ElectronReact',
-          accelerator: 'Command+H',
+          // accelerator: 'Command+H',
           selector: 'hide:'
         },
         {
           label: 'Hide Others',
-          accelerator: 'Command+Shift+H',
+          // accelerator: 'Command+Shift+H',
           selector: 'hideOtherApplications:'
         },
         { label: 'Show All', selector: 'unhideAllApplications:' },
         { type: 'separator' },
         {
           label: 'Quit',
-          accelerator: 'Command+Q',
+          // accelerator: 'Command+Q',
           click: () => {
             app.quit();
           }
@@ -88,15 +88,19 @@ export default class MenuBuilder {
     const subMenuEdit: DarwinMenuItemConstructorOptions = {
       label: 'Edit',
       submenu: [
-        { label: 'Undo', accelerator: 'Command+Z', selector: 'undo:' },
-        { label: 'Redo', accelerator: 'Shift+Command+Z', selector: 'redo:' },
+        { label: 'Undo',
+        // accelerator: 'Command+Z',
+        selector: 'undo:' },
+        { label: 'Redo',
+        // accelerator: 'Shift+Command+Z',
+        selector: 'redo:' },
         { type: 'separator' },
-        { label: 'Cut', accelerator: 'Command+X', selector: 'cut:' },
-        { label: 'Copy', accelerator: 'Command+C', selector: 'copy:' },
-        { label: 'Paste', accelerator: 'Command+V', selector: 'paste:' },
+        // { label: 'Cut', accelerator: 'Command+X', selector: 'cut:' },
+        // { label: 'Copy', accelerator: 'Command+C', selector: 'copy:' },
+        // { label: 'Paste', accelerator: 'Command+V', selector: 'paste:' },
         {
           label: 'Select All',
-          accelerator: 'Command+A',
+          // accelerator: 'Command+A',
           selector: 'selectAll:'
         }
       ]
@@ -106,21 +110,21 @@ export default class MenuBuilder {
       submenu: [
         {
           label: 'Reload',
-          accelerator: 'Command+R',
+          // accelerator: 'Command+R',
           click: () => {
             this.mainWindow.webContents.reload();
           }
         },
         {
           label: 'Toggle Full Screen',
-          accelerator: 'Ctrl+Command+F',
+          // accelerator: 'Ctrl+Command+F',
           click: () => {
             this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
           }
         },
         {
           label: 'Toggle Developer Tools',
-          accelerator: 'Alt+Command+I',
+          // accelerator: 'Alt+Command+I',
           click: () => {
             this.mainWindow.webContents.toggleDevTools();
           }
@@ -132,7 +136,7 @@ export default class MenuBuilder {
       submenu: [
         {
           label: 'Toggle Full Screen',
-          accelerator: 'Ctrl+Command+F',
+          // accelerator: 'Ctrl+Command+F',
           click: () => {
             this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
           }
@@ -144,10 +148,12 @@ export default class MenuBuilder {
       submenu: [
         {
           label: 'Minimize',
-          accelerator: 'Command+M',
+          // accelerator: 'Command+M',
           selector: 'performMiniaturize:'
         },
-        { label: 'Close', accelerator: 'Command+W', selector: 'performClose:' },
+        { label: 'Close',
+         // accelerator: 'Command+W',
+          selector: 'performClose:' },
         { type: 'separator' },
         { label: 'Bring All to Front', selector: 'arrangeInFront:' }
       ]
@@ -190,7 +196,8 @@ export default class MenuBuilder {
         ? subMenuViewDev
         : subMenuViewProd;
 
-    return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
+    return [];
+    // return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
   }
 
   buildDefaultTemplate() {
@@ -200,11 +207,11 @@ export default class MenuBuilder {
         submenu: [
           {
             label: '&Open',
-            accelerator: 'Ctrl+O'
+            // accelerator: 'Ctrl+O'
           },
           {
             label: '&Close',
-            accelerator: 'Ctrl+W',
+            // accelerator: 'Ctrl+W',
             click: () => {
               this.mainWindow.close();
             }
@@ -219,14 +226,14 @@ export default class MenuBuilder {
             ? [
                 {
                   label: '&Reload',
-                  accelerator: 'Ctrl+R',
+                  // accelerator: 'Ctrl+R',
                   click: () => {
                     this.mainWindow.webContents.reload();
                   }
                 },
                 {
                   label: 'Toggle &Full Screen',
-                  accelerator: 'F11',
+                  // accelerator: 'F11',
                   click: () => {
                     this.mainWindow.setFullScreen(
                       !this.mainWindow.isFullScreen()
@@ -235,7 +242,7 @@ export default class MenuBuilder {
                 },
                 {
                   label: 'Toggle &Developer Tools',
-                  accelerator: 'Alt+Ctrl+I',
+                  // accelerator: 'Alt+Ctrl+I',
                   click: () => {
                     this.mainWindow.webContents.toggleDevTools();
                   }
@@ -244,7 +251,7 @@ export default class MenuBuilder {
             : [
                 {
                   label: 'Toggle &Full Screen',
-                  accelerator: 'F11',
+                  // accelerator: 'F11',
                   click: () => {
                     this.mainWindow.setFullScreen(
                       !this.mainWindow.isFullScreen()
