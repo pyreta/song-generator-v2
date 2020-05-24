@@ -103,6 +103,7 @@ const SongGenerator = props => {
           columns={64}
           columnsPerQuarterNote={1}
           playheadLocation={playheadLocation}
+          trackId={trackInPianoRoll}
           setPlayheadLocation={setPlayheadLocation}
           notes={tracks[trackInPianoRoll].ticks}
           chords={chords.map(c => Chord.wrap(c).pianoRollData())}

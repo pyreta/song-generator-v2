@@ -22,6 +22,7 @@ const storage = {
   playheadPixelLocation: 0,
   lastData: [],
   playingNotes: Array(128).fill(null),
+  undo: {},
 };
 
 const zoomXMax = 1100;
@@ -124,9 +125,18 @@ const PianoRoll = ({
   onChordResize,
   playheadLocation,
   setPlayheadLocation,
+  trackId,
   getCallBack,
   timeSignatures,
 }) => {
+  const updateNotes = (newNotes, addToHistory = true) => {
+    if (addToHistory) {
+      storage.undo[trackId].history.splice(storage.undo[trackId].index + 1);
+      storage.undo[trackId].history.push(newNotes);
+      storage.undo[trackId].index = storage.undo[trackId].history.length - 1;
+    }
+    onNotesChange(newNotes);
+  };
   // ************************* Refs *************************
   // ************************* Refs *************************
   // ************************* Refs *************************
@@ -173,7 +183,7 @@ const PianoRoll = ({
       mergeSelectionsWithDelta(storage.clipboard, delta),
       noteClassRef.current.deselectAll(),
     );
-    onNotesChange(newNotes);
+    updateNotes(newNotes);
   };
 
   const copyNotes = () => {
@@ -182,7 +192,41 @@ const PianoRoll = ({
     return notSelected;
   };
 
-  const cutNotes = () => onNotesChange(copyNotes());
+  const cutNotes = () => updateNotes(copyNotes());
+
+  const updateNotesFromHistory = () => {
+    const newNotes = storage.undo[trackId].history[storage.undo[trackId].index];
+    onNotesChange(newNotes);
+  };
+
+  const undo = () => {
+    if (storage.undo[trackId].index > 0) {
+      storage.undo[trackId].index -= 1;
+      updateNotesFromHistory();
+    }
+  };
+
+  const redo = () => {
+    if (
+      storage.undo[trackId].index <
+      storage.undo[trackId].history.length - 1
+    ) {
+      storage.undo[trackId].index += 1;
+      updateNotesFromHistory();
+    }
+  };
+
+  useEffect(() => {
+    if (!storage.undo[trackId]) {
+      storage.undo = {
+        ...storage.undo,
+        [trackId]: {
+          history: [],
+          index: -1,
+        },
+      };
+    }
+  }, [trackId]);
 
   useEffect(() => {
     if (keysDown.Meta && keysDown.c) copyNotes();
@@ -197,8 +241,18 @@ const PianoRoll = ({
   }, [keysDown.Meta, keysDown.v]);
 
   useEffect(() => {
+    if (keysDown.Meta && keysDown.z) {
+      if (keysDown.Shift) {
+        redo();
+      } else {
+        undo();
+      }
+    }
+  }, [keysDown.Meta, keysDown.z]);
+
+  useEffect(() => {
     if (keysDown.Meta && keysDown.a) {
-      onNotesChange(noteClassRef.current.selectAll());
+      updateNotes(noteClassRef.current.selectAll());
     }
   }, [keysDown.Meta, keysDown.a]);
 
@@ -426,11 +480,11 @@ const PianoRoll = ({
       [startTick.toString(), noteNum.toString()],
       notes,
     );
-    onNotesChange(delPath);
+    updateNotes(delPath, false);
   };
 
   const addNote = note => {
-    onNotesChange(mergeNotes(note, notes));
+    updateNotes(mergeNotes(note, notes));
   };
 
   const playSingleNote = (noteNum, velocity) => {
@@ -459,7 +513,7 @@ const PianoRoll = ({
     return ticksToPixels(snappedTick);
   };
 
-  const deselectAll = () => onNotesChange(noteClassRef.current.deselectAll());
+  const deselectAll = () => updateNotes(noteClassRef.current.deselectAll());
 
   // ************************* Note ************************* handlers
   // ************************* Note ************************* handlers
@@ -492,7 +546,7 @@ const PianoRoll = ({
 
     const newLength = snap(data.location) - storage.noteBeforeChange.startTick;
     if (storage.selectionsBeforeChange) {
-      onNotesChange(seperateSelected(notes).notSelected);
+      updateNotes(seperateSelected(notes).notSelected, false);
     } else {
       deleteNote(storage.noteBeforeChange);
     }
@@ -516,7 +570,7 @@ const PianoRoll = ({
 
   const onNoteUp = () => {
     if (storage.noteDelta) {
-      onNotesChange(updatedNotes);
+      updateNotes(updatedNotes);
       storage.noteDelta = null;
     }
     storage.noteBeforeChange = null;
@@ -570,7 +624,7 @@ const PianoRoll = ({
         selectionCoords,
       );
       setSelectionCoords(null);
-      onNotesChange(notesWithSelections);
+      updateNotes(notesWithSelections);
     }
   };
 
@@ -611,7 +665,7 @@ const PianoRoll = ({
       notes,
     );
 
-    onNotesChange(newNotesAll);
+    updateNotes(newNotesAll);
   };
 
   // ************************* Measures (Bars) ************************* handlers
@@ -855,7 +909,7 @@ const PianoRoll = ({
   useEffect(() => {
     const onKeyDown = e => {
       if (e.key === 'Backspace') {
-        onNotesChange(seperateSelected(notes).notSelected);
+        updateNotes(seperateSelected(notes).notSelected);
       }
     };
     document.addEventListener('keydown', onKeyDown);
@@ -921,7 +975,7 @@ const PianoRoll = ({
         <button type="button" onClick={() => console.log(notes)}>
           NOTES
         </button>
-        <button type="button" onClick={() => onNotesChange({})}>
+        <button type="button" onClick={() => updateNotes({})}>
           CLEAR
         </button>
         <button type="button" onClick={cutNotes}>CUT</button>
@@ -990,6 +1044,7 @@ PianoRoll.propTypes = {
   playheadLocation: PropTypes.number.isRequired,
   setPlayheadLocation: PropTypes.func.isRequired,
   getCallBack: PropTypes.func.isRequired,
+  trackId: PropTypes.string.isRequired,
 };
 
 export default PianoRoll;
