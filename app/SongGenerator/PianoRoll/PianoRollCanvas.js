@@ -1,46 +1,4 @@
-const colors = {
-  root: 'rgb(54, 41, 49)',
-  third: 'rgb(58, 51, 24)',
-  // fifth: 'rgb(27, 55, 72)',
-  fifth: 'rgb(27, 72, 100)',
-  seventh: 'rgb(24, 55, 58)',
-  line: '#17242D',
-  background: '#09161D',
-  noteSelected: 'yellow',
-  note: 'red',
-  blackKey: 'rgb(27, 55, 72)',
-  whiteKey: '#BDC2C4',
-  selection: 'rgba(0, 1, 127, 0.1',
-  playHead: 'rgb(15, 168, 209)',
-  border1: 'orange',
-  border2: 'rgb(27, 55, 72)',
-  border3: '#FFFFFF',
-  scale: '#2B383F',
-  chord: '#484842',
-  hover: '#ff8d0052',
-  hover2: '#4f5e653d',
-  hover3: '#e668682b',
-  hover4: 'rgba(15, 168, 209, 0.48)',
-  barLine: '#09161d57',
-};
-
-const chordColors = [
-  'rgb(221, 40, 87)',
-  'rgb(255, 251, 133)',
-  'rgb(118, 141, 170)',
-  'rgb(51, 219, 207)',
-  'rgb(107, 176, 141)',
-  'red',
-  'rgb(15,168,209)',
-  'yellow',
-  'red',
-  'orange',
-  'purple',
-  '#ffa54f',
-  '#FF7F50',
-  '#ffdab9',
-  '#b5f6da',
-];
+import { chordColors, colors } from '../theme';
 
 function rectsIntersect(r1, r2) {
   return !(r2.x1 > r1.x2 || r2.x2 < r1.x1 || r2.y1 > r1.y2 || r2.y2 < r1.y1);
@@ -65,7 +23,7 @@ class PianoRollCanvas {
       columns = 64,
       pianoWidth = 100,
       barsHeight = 20,
-      chordsHeight = 40,
+      chordsHeight = 30,
       velocityHeight = 100,
       columnsPerQuarterNote = 1,
       scrollX = 0,
@@ -436,8 +394,9 @@ class PianoRollCanvas {
       idx === draggingChordIndex ? colors.background : chordColors[chord.root];
     this.ctx.fillRect(rectX, 0, chordPixelLength, this.chordsHeight);
     this.ctx.fillStyle = colors.background;
+    this.ctx.strokeStyle = colors.blackKey;
     this.ctx.strokeRect(rectX, 0, chordPixelLength, this.chordsHeight);
-    this.ctx.font = '18px Helvetica';
+    this.ctx.font = '14px Helvetica';
     this.ctx.textAlign = 'center';
     const chordName = `${chord.name} (${chord.romanNumeral})`;
     const textWidth = this.ctx.measureText(chordName).width;
@@ -544,12 +503,12 @@ class PianoRollCanvas {
       } else if (location % tickDivision === 0) {
         this.drawVerticalLine(location, colors.hover2, {
           y1: this.chordsHeight,
-          y2: this.headerHeight - this.barsHeight / 2,
+          y2: this.chordsHeight + this.barsHeight * 0.3,
         });
       } else if (this.cellwidth > 150) {
         this.drawVerticalLine(location, colors.hover2, {
           y1: this.chordsHeight,
-          y2: this.chordsHeight + this.headerHeight * 0.1,
+          y2: this.chordsHeight + this.headerHeight * 0.05,
         });
       }
     }

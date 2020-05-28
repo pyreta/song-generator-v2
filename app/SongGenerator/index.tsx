@@ -6,6 +6,7 @@ import PianoRoll from './PianoRoll';
 import Transport from './Transport';
 import { trackData1, trackData2 } from './trackData';
 import chordData from './chordData';
+import ChordBoard from './ChordBoard';
 import timeSignatureData from './timeSignatureData';
 import { exportMidi, playMidi } from './helpers';
 import Chord from './models/Chord';
@@ -30,10 +31,10 @@ const setNote = (note, [trackName, startTick, noteVal], tracks) => {
         ...tracks[trackName].ticks,
         [startTick]: {
           ...tracks[trackName].ticks[startTick],
-          [noteVal]: note
-        }
-      }
-    }
+          [noteVal]: note,
+        },
+      },
+    },
   };
 };
 
@@ -47,6 +48,7 @@ const SongGenerator = props => {
   const [tracks, setTracks] = useState({ trackData1, trackData2 });
   const [timeSignatures, setTimeSigatures] = useState(timeSignatureData);
   const [chords, setChords] = useState(chordData);
+  const [pianoRoll, setPianoRoll] = useState(true);
   const [playheadLocation, setPlayheadLocation] = useState(0);
   const sizeRef = useRef();
 
@@ -63,78 +65,117 @@ const SongGenerator = props => {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  const highlightNote = (data) => {
-    pianoRollCallback(data)
+  const highlightNote = data => {
+    pianoRollCallback(data);
   };
 
   const getCallBack = callback => {
     pianoRollCallback = callback;
-  }
+  };
 
   return (
     <>
-      <Transport
-        onPlay={() => playMidi(Object.values(tracks), bpm, trackInPianoRoll, highlightNote, playheadLocation)}
-        onExport={() => exportMidi(Object.values(tracks))}
-        setBpm={setBpm}
-        bpm={bpm}
-      />
-      <div>{tracks[trackInPianoRoll].name}</div>
-      <div>
-        {Object.keys(tracks).map(t => (
-          <button
-            key={t}
-            onClick={() => setTrackInPianoRoll(t)}
-            style={{ background: trackInPianoRoll === t ? 'red' : 'white' }}
-          >
-            {tracks[t].name}
-          </button>
-        ))}
-      </div>
-      <Wrapper ref={sizeRef}>
-        <PianoRoll
-          width={width}
-          height={height}
-          canvasWidthMultiple={2}
-          canvasHeightMultiple={2}
-          getCallBack={getCallBack}
-          timeSignatures={timeSignatures}
-          octaves={7}
-          columns={64}
-          columnsPerQuarterNote={1}
-          playheadLocation={playheadLocation}
-          trackId={trackInPianoRoll}
-          setPlayheadLocation={setPlayheadLocation}
-          notes={tracks[trackInPianoRoll].ticks}
-          chords={chords.map(c => Chord.wrap(c).pianoRollData())}
-          onNotesChange={ticks => {
-            setTracks({
-              ...tracks,
-              [trackInPianoRoll]: {
-                ...tracks[trackInPianoRoll],
-                ticks,
-              },
-            });
-          }}
-          onDeviceChange={outputDevice => {
-            setTracks({
-              ...tracks,
-              [trackInPianoRoll]: {
-                ...tracks[trackInPianoRoll],
-                outputDevice,
-              },
-            });
-          }}
-          onChordReorder={newIndeces =>
-            setChords(newIndeces.map(i => chords[i]))
-          }
-          onChordResize={lengths =>
-            setChords(lengths.map((length, i) => ({ ...chords[i], length })))
-          }
-          outputId={tracks[trackInPianoRoll].outputDevice}
-          outputOptions={WebMidi.outputs.map(o => ({ id: o.id, name: o.name }))}
-        />
-      </Wrapper>
+      {pianoRoll ? (
+        <>
+          <button onClick={() => setPianoRoll(false)}>CHORDS</button>
+          <Transport
+            onPlay={() =>
+              playMidi(
+                Object.values(tracks),
+                bpm,
+                trackInPianoRoll,
+                highlightNote,
+                playheadLocation,
+              )
+            }
+            onExport={() => exportMidi(Object.values(tracks))}
+            setBpm={setBpm}
+            bpm={bpm}
+          />
+          <div>{tracks[trackInPianoRoll].name}</div>
+          <div>
+            {Object.keys(tracks).map(t => (
+              <button
+                key={t}
+                onClick={() => setTrackInPianoRoll(t)}
+                style={{ background: trackInPianoRoll === t ? 'red' : 'white' }}
+              >
+                {tracks[t].name}
+              </button>
+            ))}
+          </div>
+          <Wrapper ref={sizeRef}>
+            <PianoRoll
+              width={width}
+              height={height}
+              canvasWidthMultiple={2}
+              canvasHeightMultiple={2}
+              getCallBack={getCallBack}
+              timeSignatures={timeSignatures}
+              octaves={7}
+              columns={64}
+              columnsPerQuarterNote={1}
+              playheadLocation={playheadLocation}
+              trackId={trackInPianoRoll}
+              setPlayheadLocation={setPlayheadLocation}
+              notes={tracks[trackInPianoRoll].ticks}
+              chords={chords.map(c => Chord.wrap(c).pianoRollData())}
+              onNotesChange={ticks => {
+                setTracks({
+                  ...tracks,
+                  [trackInPianoRoll]: {
+                    ...tracks[trackInPianoRoll],
+                    ticks,
+                  },
+                });
+              }}
+              onDeviceChange={outputDevice => {
+                setTracks({
+                  ...tracks,
+                  [trackInPianoRoll]: {
+                    ...tracks[trackInPianoRoll],
+                    outputDevice,
+                  },
+                });
+              }}
+              onChordReorder={newIndeces =>
+                setChords(newIndeces.map(i => chords[i]))
+              }
+              onChordResize={lengths =>
+                setChords(
+                  lengths.map((length, i) => ({ ...chords[i], length })),
+                )
+              }
+              outputId={tracks[trackInPianoRoll].outputDevice}
+              outputOptions={WebMidi.outputs.map(o => ({
+                id: o.id,
+                name: o.name,
+              }))}
+            />
+          </Wrapper>
+        </>
+      ) : (
+        <>
+          <button onClick={() => setPianoRoll(true)}>Piano Roll</button>
+          <Transport
+            onPlay={() =>
+              playMidi(
+                Object.values(tracks),
+                bpm,
+                trackInPianoRoll,
+                highlightNote,
+                playheadLocation,
+              )
+            }
+            onExport={() => exportMidi(Object.values(tracks))}
+            setBpm={setBpm}
+            bpm={bpm}
+          />
+          <ChordBoard
+            chords={chords}
+          />
+        </>
+      )}
     </>
   );
 };
