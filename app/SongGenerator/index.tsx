@@ -7,15 +7,15 @@ import Transport from './Transport';
 import { trackData1, trackData2 } from './trackData';
 import chordData from './chordData';
 import ChordBoard from './ChordBoard';
+import Chord from './ChordBoard/Chord';
 import timeSignatureData from './timeSignatureData';
 import { exportMidi, playMidi } from './helpers';
-import Chord from './models/Chord';
+import ChordModel from './models/Chord';
 
 const Wrapper = styled.div`
   max-height: 75vh;
   max-width: 90vw;
   height: 2000px;
-  width: 1500px;
 `;
 
 const getNote = ([trackName, startTick, noteVal], tracks) => {
@@ -48,7 +48,7 @@ const SongGenerator = props => {
   const [tracks, setTracks] = useState({ trackData1, trackData2 });
   const [timeSignatures, setTimeSigatures] = useState(timeSignatureData);
   const [chords, setChords] = useState(chordData);
-  const [pianoRoll, setPianoRoll] = useState(true);
+  const [pianoRoll, setPianoRoll] = useState(false);
   const [playheadLocation, setPlayheadLocation] = useState(0);
   const sizeRef = useRef();
 
@@ -72,6 +72,14 @@ const SongGenerator = props => {
   const getCallBack = callback => {
     pianoRollCallback = callback;
   };
+
+  const outputDevice = WebMidi.outputs.filter(o => o.id === tracks[trackInPianoRoll].outputDevice)[0];
+  console.log(`outputDevice:`, outputDevice)
+  const onNotesDown = (notes, velocity) => {
+    console.log(`notes:`, notes)
+    outputDevice.playNote(notes, 1, { velocity: velocity || 0.5 });
+  }
+  const onNotesUp = notes => outputDevice.stopNote(notes, 1);
 
   return (
     <>
@@ -119,7 +127,7 @@ const SongGenerator = props => {
               trackId={trackInPianoRoll}
               setPlayheadLocation={setPlayheadLocation}
               notes={tracks[trackInPianoRoll].ticks}
-              chords={chords.map(c => Chord.wrap(c).pianoRollData())}
+              chords={chords.map(c => ChordModel.wrap(c).pianoRollData())}
               onNotesChange={ticks => {
                 setTracks({
                   ...tracks,
@@ -171,8 +179,17 @@ const SongGenerator = props => {
             setBpm={setBpm}
             bpm={bpm}
           />
-          <ChordBoard
-            chords={chords}
+          {
+          // <ChordBoard
+          //   chords={chords}
+          //   onNotesDown={onNotesDown}
+          //   onNotesUp={onNotesUp}
+          // />
+          }
+          <Chord
+            chord={ChordModel.wrap({ chord: 2 })}
+            onNotesDown={onNotesDown}
+            onNotesUp={onNotesUp}
           />
         </>
       )}

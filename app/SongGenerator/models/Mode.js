@@ -40,10 +40,15 @@ class Mode {
 
   intervals() {
     const scaleIntervals = this.getScale().intervals();
-    const sliceIdx = this.number % 12 - 1;
+    const sliceIdx = (this.number % 12) - 1;
     const left = scaleIntervals.slice(0, sliceIdx);
     const right = scaleIntervals.slice(sliceIdx);
-    return [...right, ...left]
+    return [...right, ...left];
+  }
+
+  isMajor() {
+    const [i1, i2] = this.intervals();
+    return i1 + i2 === 4;
   }
 
   notes() {

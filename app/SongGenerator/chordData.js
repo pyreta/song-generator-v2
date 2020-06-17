@@ -1,7 +1,7 @@
 export default [
   {
     key: 3,
-    scale: 'harmonicMinor',
+    scale: 'major',
     mode: 1,
     length: 1152,
     chord: 1,

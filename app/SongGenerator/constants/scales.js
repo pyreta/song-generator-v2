@@ -1,4 +1,3 @@
-
 export const mapMajor = {
   to: {
     ionian: {},
@@ -12,8 +11,26 @@ export const mapMajor = {
     locrianSharp6: { 2: 1, 4: 3, 7: 6, 11: 10 },
     phrygianDominant: { 2: 1, 9: 8, 11: 10 },
     ionianSharp5: { 7: 8 },
-  }
-}
+  },
+};
+
+/*
+C: 0, G: 7,
+C#: 1, F#: 6,
+D: 2, F: 5,
+D#: 3, E: 4,
+E: 4, D#: 3,
+F: 5, D: 2,
+F#: 6, C#: 1,
+G: 7, C: 0,
+G#: 8, B: 11,
+A: 9, A#: 10,
+A#: 10, A: 9,
+B: 11, G#: 8,
+
+*/
+
+export const negativeMap = [7, 5, 3, 1, 11, 9, 7, 5, 3, 1, 11, 9];
 
 export const intervalTypes = [
   'root',
@@ -41,7 +58,7 @@ export const intervalTypes = [
   'sharp',
 ];
 
-export const romanNumerals = ['i','ii', 'iii', 'iv', 'v', 'vi', 'vii']
+export const romanNumerals = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
 
 const scales = {
   major: {
@@ -54,7 +71,7 @@ const scales = {
       'Lydian',
       'Mixolydian',
       'Aeolian',
-      'Locrian'
+      'Locrian',
     ],
   },
   minor: {
@@ -80,7 +97,7 @@ const scales = {
       'Dorian #4',
       'Phrygian Dominant',
       'Lydian #2',
-      'Alt Dominant bb7'
+      'Alt Dominant bb7',
     ],
   },
   melodicMinor: {
@@ -93,7 +110,7 @@ const scales = {
       'Lydian Dominant',
       'Mixolydian b6',
       'Semilocrian',
-      'Superlocrian'
+      'Superlocrian',
     ],
   },
   harmonicMajor: {
@@ -106,7 +123,7 @@ const scales = {
       'Lydian b3',
       'Mixolydian b9',
       'Aeolian b1',
-      'Locrian b7'
+      'Locrian b7',
     ],
   },
 };

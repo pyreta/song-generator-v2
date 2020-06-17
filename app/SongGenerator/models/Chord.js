@@ -1,3 +1,4 @@
+// import { detect } from "@tonaljs/chord-detect";
 import Scale from './Scale';
 // import Progression from './Progression';
 import chordProbabilities from './hookTheory/chordProbabilities';
@@ -17,6 +18,17 @@ import {
   rotateVoice,
   convertNotesToVoicing,
 } from './helpers';
+
+// const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+// const negativeMap = [7, 5, 3, 1, 11, 9, 7, 5, 3, 1, 11, 9];
+
+// const mirrorNote = note => note;
+// const mirrorNote = (note, key) => {
+//   const n1 = negativeMap[(note - key) % 12] + note;
+//   const n2 = n1 - 12;
+//   return Math.abs(note - n1) > Math.abs(note - n2) ? n2 : n1;
+// };
 
 const ascending = (a, b) => a - b;
 const defaultChord = {
@@ -125,8 +137,9 @@ class Chord {
   }
 
   incrementKey(add = 1) {
+    const newKey = this.get('key') + add;
     return new Chord(
-      { ...this.chord, key: this.get('key') + add },
+      { ...this.chord, key: newKey < 0 ? 12 + newKey : newKey },
       this.progression,
     );
   }
@@ -501,6 +514,47 @@ class Chord {
 
   equals(otherChord) {
     return this.voicing().signature() === otherChord.voicing().signature();
+  }
+
+  chordOptions() {
+    return [
+      this.secondaryDominant().matchVoicingToChord({ lastPlayedChord: this }),
+      this.fourthMinorSubstitution().matchVoicingToChord({
+        lastPlayedChord: this,
+      }),
+      this.chromaticSubstitution()[0].matchVoicingToChord({
+        lastPlayedChord: this,
+      }),
+      this.tritoneSubstitution().matchVoicingToChord({
+        lastPlayedChord: this,
+      }),
+      this.makeDominantFifth().matchVoicingToChord({ lastPlayedChord: this }),
+      this.incrementKey(-1).matchVoicingToChord({ lastPlayedChord: this }),
+      ...this.chromaticMediants(),
+      this.secondaryDominant().matchVoicingToChord({ lastPlayedChord: this }),
+      this.fourthMinorSubstitution().matchVoicingToChord({
+        lastPlayedChord: this,
+      }),
+      this.chromaticSubstitution()[0].matchVoicingToChord({
+        lastPlayedChord: this,
+      }),
+      this.tritoneSubstitution().matchVoicingToChord({
+        lastPlayedChord: this,
+      }),
+      this.makeDominantFifth().matchVoicingToChord({ lastPlayedChord: this }),
+      this.incrementKey(-1).matchVoicingToChord({ lastPlayedChord: this }),
+      ...this.chromaticMediants(),
+    ];
+  }
+
+  mirror() {
+    // console.log();
+    // const newNotes = this.noteValues().map(n => NOTES[mirrorNote(n, this.chord.key) % 12])
+    // console.log(`newNotes:`, newNotes)
+    // console.log(`detect:`, detect)
+    // console.log(`detect(this.noteValues().map(n => NOTES[n % 12])):`, detect(this.noteValues().map(n => NOTES[n % 12])))
+    // console.log(`detect(newNotes):`, detect(newNotes))
+    return this;
   }
 
   pianoRollData() {

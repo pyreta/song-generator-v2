@@ -7,6 +7,7 @@ export default class Progression {
   static wrap(...args) {
     return new Progression(...args);
   }
+
   static allChords(args = {}, secondaryDominants) {
     const { key, scale, mode, notes } = {
       key: 0,
@@ -17,12 +18,14 @@ export default class Progression {
       ...args,
     };
 
-    const progression = new Progression([1, 2, 3, 4, 5, 6, 7].map(chord => {
-      const c =  Chord.wrap({ key, scale, mode, chord, notes }).isValid()
-        ? { key, scale, mode, chord, notes }
-        : { key, scale, mode, chord, notes: defaultNotes };
-      return c;
-    }));
+    const progression = new Progression(
+      [1, 2, 3, 4, 5, 6, 7].map(chord => {
+        const c = Chord.wrap({ key, scale, mode, chord, notes }).isValid()
+          ? { key, scale, mode, chord, notes }
+          : { key, scale, mode, chord, notes: defaultNotes };
+        return c;
+      }),
+    );
     // return new Progression(progression);
     return secondaryDominants ? progression.secondaryDominants() : progression;
   }
@@ -42,8 +45,8 @@ export default class Progression {
   }
 
   setInversion(n) {
-    return new Progression(this.progression.map(
-      chord => new Chord(chord).setInversion(n).unwrap())
+    return new Progression(
+      this.progression.map(chord => new Chord(chord).setInversion(n).unwrap()),
     );
   }
 
@@ -82,7 +85,9 @@ export default class Progression {
   }
 
   secondaryDominants() {
-    return new Progression(this.chords().map(c => c.secondaryDominant().unwrap()));
+    return new Progression(
+      this.chords().map(c => c.secondaryDominant().unwrap()),
+    );
   }
 
   swap(chordA, chordB) {
